@@ -8,6 +8,18 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "./NFTDescriptor.sol";
 
 contract MathBlocksToken is ERC721Upgradeable, Ownable2StepUpgradeable {
+    event Purcahsed(uint256 price);
+    event Withdrawn(uint256 amount);
+
+    struct TokenInfo {
+        string name;
+        string symbol;
+        string description;
+        string baseURL;
+        uint256 price;
+        uint256 endsAtTimestamp;
+    }
+
     using StringsUpgradeable for uint256;
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
@@ -21,6 +33,7 @@ contract MathBlocksToken is ERC721Upgradeable, Ownable2StepUpgradeable {
     uint256 public price;
     uint256 public endsAtTimestamp;
 
+    error FactoryMustInitilize();
     error SaleHasEnded();
     error InvalidPrice();
 
@@ -36,13 +49,28 @@ contract MathBlocksToken is ERC721Upgradeable, Ownable2StepUpgradeable {
         string memory _baseURL,
         uint256 _price,
         uint256 _endsAtTimestamp
-    ) external {
+    ) external initializer {
+        if (msg.sender != factory) revert FactoryMustInitilize();
+
         __ERC721_init(_name, _symbol);
         _transferOwnership(owner);
+
         baseURL = _baseURL;
         description = _description;
         price = _price;
         endsAtTimestamp = _endsAtTimestamp;
+    }
+
+    function tokenInfo() public view returns (TokenInfo memory) {
+        return
+            TokenInfo({
+                name: name(),
+                symbol: symbol(),
+                description: description,
+                baseURL: baseURL,
+                price: price,
+                endsAtTimestamp: endsAtTimestamp
+            });
     }
 
     function tokenURI(
@@ -75,18 +103,19 @@ contract MathBlocksToken is ERC721Upgradeable, Ownable2StepUpgradeable {
     }
 
     function purchase(uint256 amount) public payable {
-        if (block.timestamp < endsAtTimestamp) revert SaleHasEnded();
+        if (endsAtTimestamp < block.timestamp) revert SaleHasEnded();
         if (msg.value < (amount * price)) revert InvalidPrice();
 
         for (uint256 i = 0; i < amount; i++) {
             _seedAndMint(msg.sender);
+            emit Purcahsed(price);
         }
     }
 
-    function withdraw() public returns (bool) {
-        (bool successFunds, ) = msg.sender.call{value: address(this).balance}(
-            ""
-        );
+    function withdraw() public onlyOwner returns (bool) {
+        uint256 amount = address(this).balance;
+        (bool successFunds, ) = msg.sender.call{value: amount}("");
+        emit Withdrawn(amount);
         return successFunds;
     }
 

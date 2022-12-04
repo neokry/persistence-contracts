@@ -6,6 +6,10 @@ import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
 contract MathBlocksFactory is Ownable2Step {
+    event CloneDeployed(address owner, address clone);
+
+    mapping(address => address[]) userToDeployedClones;
+
     /// @notice platform implementation.
     address public implementation;
 
@@ -29,6 +33,9 @@ contract MathBlocksFactory is Ownable2Step {
         uint256 _endsAtTimestamp
     ) external returns (address clone) {
         clone = Clones.clone(implementation);
+        userToDeployedClones[msg.sender].push(clone);
+
+        emit CloneDeployed(msg.sender, clone);
 
         // Initialize clone.
         MathBlocksToken(clone).initialize(
