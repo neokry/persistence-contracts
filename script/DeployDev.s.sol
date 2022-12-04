@@ -2,7 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
-import "../src/MathBlocksFactory.sol";
+import "../src/MathBlocksToken/MathBlocksFactory.sol";
+import "../src/HTMLRenderers/ETHFSRenderer.sol";
 import "forge-std/console2.sol";
 
 contract Deploy is Script {
@@ -10,7 +11,13 @@ contract Deploy is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_DEV");
         vm.startBroadcast(deployerPrivateKey);
 
-        MathBlocksFactory factory = new MathBlocksFactory();
+        IHTMLRenderer renderer = new ETHFSRenderer(
+            0x5E348d0975A920E9611F8140f84458998A53af94,
+            "p5.min.js.gz",
+            "gunzipScripts-0.0.1.js"
+        );
+
+        MathBlocksFactory factory = new MathBlocksFactory(address(renderer));
         console2.log("factory:");
         console2.log(address(factory));
 

@@ -2,18 +2,22 @@
 pragma solidity ^0.8.9;
 
 import {Base64} from "base64-sol/base64.sol";
-import {ILibraryStorage} from "./interfaces/ILibraryStorage.sol";
+import {ILibraryStorage} from "./ILibraryStorage.sol";
+import {IHTMLRenderer} from "./interface/IHTMLRenderer.sol";
 
-library HTMLGeneratorMC {
-    struct HTMLURIParams {
-        string script;
-        string seed;
+contract MathCastlesRenderer is IHTMLRenderer {
+    address immutable libraryStorage;
+    string libraryName;
+
+    constructor(address _libraryStorage, string memory _libraryName) {
+        libraryStorage = _libraryStorage;
+        libraryName = _libraryName;
     }
 
     /**
      * @notice Construct an html URI.
      */
-    function constructHTMLURI(
+    function generateHTMLURI(
         HTMLURIParams memory params
     ) public view returns (string memory) {
         return
@@ -24,9 +28,9 @@ library HTMLGeneratorMC {
                         bytes(
                             abi.encodePacked(
                                 '<html><head><style type="text/css"> *{padding: 0; margin: 0;}</style><script>',
-                                ILibraryStorage(
-                                    0x16cc845d144A283D1b0687FBAC8B0601cC47A6C3
-                                ).readLibrary("p5.js 1.4.2"),
+                                ILibraryStorage(libraryStorage).readLibrary(
+                                    libraryName
+                                ),
                                 'var seed=Number("',
                                 params.seed,
                                 '".slice(0,20));',

@@ -2,34 +2,41 @@
 pragma solidity ^0.8.9;
 
 import {Base64} from "base64-sol/base64.sol";
-import {ILibraryStorage} from "./interfaces/ILibraryStorage.sol";
 import {IFileStore} from "ethfs/IFileStore.sol";
+import {IHTMLRenderer} from "./interface/IHTMLRenderer.sol";
 
-library HTMLGeneratorETHFS {
-    struct HTMLURIParams {
-        string script;
-        string seed;
+contract ETHFSRenderer is IHTMLRenderer {
+    address immutable fileStoreAddress;
+    string libraryName;
+    string gzipName;
+
+    constructor(
+        address _fileStoreAddress,
+        string memory _libraryName,
+        string memory _gzipName
+    ) {
+        fileStoreAddress = _fileStoreAddress;
+        libraryName = _libraryName;
+        gzipName = _gzipName;
     }
 
     /**
      * @notice Construct an html URI.
      */
-    function constructHTMLURI(
+    function generateHTMLURI(
         HTMLURIParams memory params
     ) public view returns (string memory) {
-        IFileStore fileStore = IFileStore(
-            0x5E348d0975A920E9611F8140f84458998A53af94
-        );
+        IFileStore fileStore = IFileStore(fileStoreAddress);
 
         string memory gunzip = string.concat(
             '<script src="data:text/javascript;base64,',
-            fileStore.getFile("gunzipScripts-0.0.1.js").read(),
+            fileStore.getFile(gzipName).read(),
             '"></script>'
         );
 
         string memory p5 = string.concat(
             '<script type="text/javascript+gzip" src="data:text/javascript;base64,',
-            fileStore.getFile("p5.min.js.gz").read(),
+            fileStore.getFile(libraryName).read(),
             '"></script>'
         );
 
@@ -55,3 +62,7 @@ library HTMLGeneratorETHFS {
             );
     }
 }
+
+//0x5E348d0975A920E9611F8140f84458998A53af94
+//"gunzipScripts-0.0.1.js"
+//"p5.min.js.gz"
