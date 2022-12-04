@@ -8,6 +8,10 @@
     "test": "test"
   },
   "scripts": {
+    "build": "forge build",
+    "test": "forge test",
+    "deploy:staging": "source .env && forge script script/Deploy.s.sol:Deploy --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv",
+    "mint:staging": "source .env && forge script script/MintDev.s.sol:Mint --rpc-url $GOERLI_RPC_URL --broadcast -vvvv",
     "deploy:dev": "forge script script/DeployDev.s.sol:Deploy --fork-url http://localhost:8545 --broadcast",
     "mint:dev": "forge script script/MintDev.s.sol:Mint --fork-url http://localhost:8545 --broadcast"
   },

@@ -7,7 +7,7 @@ import "forge-std/console2.sol";
 
 contract Deploy is Script {
     function run() public {
-        uint256 deployerPrivateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_DEV");
         vm.startBroadcast(deployerPrivateKey);
 
         MathBlocksFactory factory = new MathBlocksFactory();

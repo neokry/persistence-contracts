@@ -28,7 +28,7 @@ contract MathBlocksFactory is Ownable2Step {
         string memory _name,
         string memory _symbol,
         string memory _description,
-        string memory _baseURL,
+        string memory _script,
         uint256 _price,
         uint256 _endsAtTimestamp
     ) external returns (address clone) {
@@ -43,7 +43,7 @@ contract MathBlocksFactory is Ownable2Step {
             _name,
             _symbol,
             _description,
-            _baseURL,
+            _script,
             _price,
             _endsAtTimestamp
         );

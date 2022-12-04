@@ -4,12 +4,13 @@ pragma solidity ^0.8.13;
 import "forge-std/Script.sol";
 import "../src/MathBlocksFactory.sol";
 import "../src/MathBlocksToken.sol";
+import "../src/HTMLGeneratorETHFS.sol";
 import "forge-std/console2.sol";
 
 contract Mint is Script {
     function run() public {
-        uint256 deployerPrivateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
-        address factory = 0xc3023a2c9f7B92d1dd19F488AF6Ee107a78Df9DB;
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        address factory = 0x9BFA1119549d67c951e9515d874A4Da90B98b6f9;
 
         vm.startBroadcast(deployerPrivateKey);
 
@@ -23,11 +24,11 @@ contract Mint is Script {
         );
 
         MathBlocksToken(clone).safeMint(
-            0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+            0xa471C9508Acf13867282f36cfCe5c41D719ab78B
         );
 
-        console2.log("html:");
-        console2.log(MathBlocksToken(clone).tokenURI(0));
+        console2.log("clone:");
+        console2.log(clone);
 
         vm.stopBroadcast();
     }

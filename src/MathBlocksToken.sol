@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
-import "./HTMLGenerator.sol";
+import "./HTMLGeneratorETHFS.sol";
 import "./NFTDescriptor.sol";
 
 contract MathBlocksToken is ERC721Upgradeable, Ownable2StepUpgradeable {
@@ -27,10 +27,6 @@ contract MathBlocksToken is ERC721Upgradeable, Ownable2StepUpgradeable {
 
     CountersUpgradeable.Counter private _tokenIdCounter;
     mapping(uint256 => uint256) public _tokenIdToSeed;
-
-    address public constant libaryStorage =
-        0x16cc845d144A283D1b0687FBAC8B0601cC47A6C3;
-    string public constant libraryName = "p5.js 1.4.2";
 
     address public immutable factory;
 
@@ -105,14 +101,9 @@ contract MathBlocksToken is ERC721Upgradeable, Ownable2StepUpgradeable {
     function constructAnimationURL(
         uint256 seed
     ) public view returns (string memory) {
-        HTMLGenerator.HTMLURIParams memory params = HTMLGenerator
-            .HTMLURIParams({
-                libraryStorage: libaryStorage,
-                libraryName: libraryName,
-                script: script,
-                seed: seed.toString()
-            });
-        return HTMLGenerator.constructHTMLURI(params);
+        HTMLGeneratorETHFS.HTMLURIParams memory params = HTMLGeneratorETHFS
+            .HTMLURIParams({script: script, seed: seed.toString()});
+        return HTMLGeneratorETHFS.constructHTMLURI(params);
     }
 
     function purchase(uint256 amount) public payable {
