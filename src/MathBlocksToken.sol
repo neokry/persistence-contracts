@@ -5,6 +5,8 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+
+import "./HTMLGenerator.sol";
 import "./NFTDescriptor.sol";
 
 contract MathBlocksToken is ERC721Upgradeable, Ownable2StepUpgradeable {
@@ -15,7 +17,7 @@ contract MathBlocksToken is ERC721Upgradeable, Ownable2StepUpgradeable {
         string name;
         string symbol;
         string description;
-        string baseURL;
+        string script;
         uint256 price;
         uint256 endsAtTimestamp;
     }
@@ -26,10 +28,14 @@ contract MathBlocksToken is ERC721Upgradeable, Ownable2StepUpgradeable {
     CountersUpgradeable.Counter private _tokenIdCounter;
     mapping(uint256 => uint256) public _tokenIdToSeed;
 
+    address public constant libaryStorage =
+        0x16cc845d144A283D1b0687FBAC8B0601cC47A6C3;
+    string public constant libraryName = "p5.js 1.4.2";
+
     address public immutable factory;
 
     string public description;
-    string public baseURL;
+    string public script;
     uint256 public price;
     uint256 public endsAtTimestamp;
 
@@ -46,7 +52,7 @@ contract MathBlocksToken is ERC721Upgradeable, Ownable2StepUpgradeable {
         string memory _name,
         string memory _symbol,
         string memory _description,
-        string memory _baseURL,
+        string memory _script,
         uint256 _price,
         uint256 _endsAtTimestamp
     ) external initializer {
@@ -55,7 +61,7 @@ contract MathBlocksToken is ERC721Upgradeable, Ownable2StepUpgradeable {
         __ERC721_init(_name, _symbol);
         _transferOwnership(owner);
 
-        baseURL = _baseURL;
+        script = _script;
         description = _description;
         price = _price;
         endsAtTimestamp = _endsAtTimestamp;
@@ -67,7 +73,7 @@ contract MathBlocksToken is ERC721Upgradeable, Ownable2StepUpgradeable {
                 name: name(),
                 symbol: symbol(),
                 description: description,
-                baseURL: baseURL,
+                script: script,
                 price: price,
                 endsAtTimestamp: endsAtTimestamp
             });
@@ -99,7 +105,14 @@ contract MathBlocksToken is ERC721Upgradeable, Ownable2StepUpgradeable {
     function constructAnimationURL(
         uint256 seed
     ) public view returns (string memory) {
-        return string(abi.encodePacked(baseURL, "?seed=", seed.toString()));
+        HTMLGenerator.HTMLURIParams memory params = HTMLGenerator
+            .HTMLURIParams({
+                libraryStorage: libaryStorage,
+                libraryName: libraryName,
+                script: script,
+                seed: seed.toString()
+            });
+        return HTMLGenerator.constructHTMLURI(params);
     }
 
     function purchase(uint256 amount) public payable {

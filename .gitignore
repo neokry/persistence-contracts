@@ -9,3 +9,5 @@ out/
 
 # Dotenv file
 .env
+.env.staging
+.env.dev

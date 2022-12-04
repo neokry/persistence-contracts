@@ -1,0 +1,24 @@
+{
+  "name": "mathblocks",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "deploy:dev": "forge script script/DeployDev.s.sol:Deploy --fork-url http://localhost:8545 --broadcast",
+    "mint:dev": "forge script script/MintDev.s.sol:Mint --fork-url http://localhost:8545 --broadcast"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neokry/MathBlocksToken.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/neokry/MathBlocksToken/issues"
+  },
+  "homepage": "https://github.com/neokry/MathBlocksToken#readme"
+}
