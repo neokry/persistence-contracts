@@ -101,7 +101,11 @@ contract MathBlocksToken is
     //[[[[PURCHASE FUNCTIONS]]]]
 
     function purchase(uint256 amount) external payable nonReentrant {
-        if (tokenInfo.endsAtTimestamp < block.timestamp) revert SaleHasEnded();
+        if (
+            block.timestamp < tokenInfo.startsAtTimestamp ||
+            block.timestamp >= tokenInfo.endsAtTimestamp
+        ) revert SaleNotActive();
+
         if (msg.value < (amount * tokenInfo.price)) revert InvalidPrice();
 
         IObservability(o11y).emitSale(msg.sender, tokenInfo.price, amount);
@@ -110,6 +114,8 @@ contract MathBlocksToken is
             _seedAndMint(msg.sender);
         }
     }
+
+    //[[[[WITHDRAW FUNCTIONS]]]]
 
     function withdraw() external nonReentrant returns (bool) {
         uint256 amount = address(this).balance;
@@ -127,6 +133,10 @@ contract MathBlocksToken is
             amount
         );
         return successFunds;
+    }
+
+    function setFundsRecipent(address fundsRecipent) external onlyOwner {
+        tokenInfo.fundsRecipent = fundsRecipent;
     }
 
     //[[[[MINT FUNCTIONS]]]]

@@ -12,11 +12,12 @@ interface IMathBlocksToken {
         string script;
         address fundsRecipent;
         uint256 price;
+        uint256 startsAtTimestamp;
         uint256 endsAtTimestamp;
     }
 
     error FactoryMustInitilize();
-    error SaleHasEnded();
+    error SaleNotActive();
     error InvalidPrice();
     error SenderNotMinter();
     error FundsSendFailure();

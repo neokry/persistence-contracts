@@ -12,11 +12,13 @@ contract MathBlocksTokenTest is Test {
     address user = address(3);
     address otherUser = address(4);
     address htmlRenderer = address(5);
+    uint256 startTime = 0;
     uint256 endTime = 0;
 
     function setUp() public {
         address o11y = address(new Observability());
         token = new MathBlocksToken(factory, o11y, htmlRenderer);
+        startTime = block.timestamp;
         endTime = block.timestamp + 2 days;
     }
 
@@ -56,7 +58,7 @@ contract MathBlocksTokenTest is Test {
         vm.stopPrank();
     }
 
-    function testRevert_purchaseSaleEnded() public {
+    function testRevert_purchaseSaleNotActive() public {
         vm.prank(factory);
         initToken();
 
@@ -64,8 +66,15 @@ contract MathBlocksTokenTest is Test {
         vm.warp(endTime + 1 seconds);
 
         vm.startPrank(user);
-        vm.expectRevert(IMathBlocksToken.SaleHasEnded.selector);
+
+        vm.expectRevert(IMathBlocksToken.SaleNotActive.selector);
         token.purchase(1);
+
+        vm.warp(startTime - 1 seconds);
+
+        vm.expectRevert(IMathBlocksToken.SaleNotActive.selector);
+        token.purchase(1);
+
         vm.stopPrank();
     }
 
@@ -168,6 +177,7 @@ contract MathBlocksTokenTest is Test {
             script: "var i = 1;",
             price: 1 ether,
             fundsRecipent: owner,
+            startsAtTimestamp: startTime,
             endsAtTimestamp: endTime
         });
         token.initialize(owner, info);

@@ -43,6 +43,7 @@ contract MathBlocksFactory is Ownable2Step {
         string memory _script,
         uint256 _price,
         address _fundsRecipent,
+        uint256 _startsAtTimestamp,
         uint256 _endsAtTimestamp
     ) external returns (address clone) {
         clone = Clones.clone(implementation);
@@ -57,6 +58,7 @@ contract MathBlocksFactory is Ownable2Step {
             script: _script,
             price: _price,
             fundsRecipent: _fundsRecipent,
+            startsAtTimestamp: _startsAtTimestamp,
             endsAtTimestamp: _endsAtTimestamp
         });
 
