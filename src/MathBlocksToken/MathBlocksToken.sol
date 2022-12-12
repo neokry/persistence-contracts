@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.12;
 
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
@@ -27,11 +27,10 @@ contract MathBlocksToken is
     mapping(address => bool) public allowedMinters;
 
     address public immutable factory;
-
-    address public immutable htmlGenerator;
     address public immutable o11y;
     uint256 internal immutable FUNDS_SEND_GAS_LIMIT = 210_000;
 
+    address htmlRenderer;
     TokenInfo public tokenInfo;
 
     //[[[[MODIFIERS]]]]
@@ -42,14 +41,14 @@ contract MathBlocksToken is
 
     //[[[[SETUP FUNCTIONS]]]]
 
-    constructor(address _factory, address _o11y, address _htmlGenerator) {
+    constructor(address _factory, address _o11y) {
         factory = _factory;
         o11y = _o11y;
-        htmlGenerator = _htmlGenerator;
     }
 
     function initialize(
         address owner,
+        address _htmlRenderer,
         TokenInfo calldata info
     ) external initializer {
         if (msg.sender != factory) revert FactoryMustInitilize();
@@ -58,6 +57,7 @@ contract MathBlocksToken is
         _transferOwnership(owner);
         allowedMinters[owner] = true;
         tokenInfo = info;
+        htmlRenderer = _htmlRenderer;
     }
 
     //[[[[VIEW FUNCTIONS]]]]
@@ -72,30 +72,44 @@ contract MathBlocksToken is
             genericDataURI(
                 fullName,
                 tokenInfo.description,
-                tokenIdToSeed[tokenId]
+                tokenIdToSeed[tokenId],
+                tokenId.toString()
             );
     }
 
     function genericDataURI(
         string memory _name,
         string memory _description,
-        uint256 seed
+        uint256 seed,
+        string memory tokenId
     ) public view returns (string memory) {
         NFTDescriptor.TokenURIParams memory params = NFTDescriptor
             .TokenURIParams({
                 name: _name,
                 description: _description,
-                animation_url: constructAnimationURL(seed)
+                animation_url: constructAnimationURL(seed, tokenId)
             });
         return NFTDescriptor.constructTokenURI(params);
     }
 
     function constructAnimationURL(
-        uint256 seed
+        uint256 seed,
+        string memory tokenId
     ) public view returns (string memory) {
         IHTMLRenderer.HTMLURIParams memory params = IHTMLRenderer
-            .HTMLURIParams({script: tokenInfo.script, seed: seed.toString()});
-        return IHTMLRenderer(htmlGenerator).generateHTMLURI(params);
+            .HTMLURIParams({
+                script: tokenInfo.script,
+                seed: seed.toString(),
+                tokenId: tokenId,
+                timestamp: block.timestamp.toString()
+            });
+        return IHTMLRenderer(htmlRenderer).generateHTMLURI(params);
+    }
+
+    //[[[[RENDERER FUNCTIONS]]]]
+
+    function setHTMLRenderer(address _htmlRenderer) external onlyOwner {
+        htmlRenderer = _htmlRenderer;
     }
 
     //[[[[PURCHASE FUNCTIONS]]]]

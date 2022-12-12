@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.12;
 
 import {MathBlocksToken, IMathBlocksToken} from "./MathBlocksToken.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
@@ -7,8 +7,6 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Observability, IObservability} from "../Observability/Observability.sol";
 
 contract MathBlocksFactory is Ownable2Step {
-    event CloneDeployed(address owner, address clone);
-
     mapping(address => address[]) userToDeployedClones;
 
     /// @notice Observability contract for data processing.
@@ -17,13 +15,13 @@ contract MathBlocksFactory is Ownable2Step {
     /// @notice platform implementation.
     address public implementation;
 
-    /// @notice Deploys implementation contract.
-    constructor(address htmlGenerator) {
-        o11y = address(new Observability());
+    address public defaultHTMLRenderer;
 
-        implementation = address(
-            new MathBlocksToken(address(this), o11y, htmlGenerator)
-        );
+    /// @notice Deploys implementation contract.
+    constructor(address _defaultHTMLRenderer) {
+        o11y = address(new Observability());
+        defaultHTMLRenderer = _defaultHTMLRenderer;
+        implementation = address(new MathBlocksToken(address(this), o11y));
     }
 
     // @notice Sets implementation contract
@@ -63,6 +61,10 @@ contract MathBlocksFactory is Ownable2Step {
         });
 
         // Initialize clone.
-        MathBlocksToken(clone).initialize(msg.sender, info);
+        MathBlocksToken(clone).initialize(
+            msg.sender,
+            defaultHTMLRenderer,
+            info
+        );
     }
 }

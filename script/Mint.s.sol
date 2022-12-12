@@ -9,7 +9,7 @@ import "forge-std/console2.sol";
 contract Mint is Script {
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        address factory = 0x9BFA1119549d67c951e9515d874A4Da90B98b6f9;
+        address factory = 0x81D22F3B96BCcD3785CE5701e8d778989282bCBA;
 
         vm.startBroadcast(deployerPrivateKey);
 

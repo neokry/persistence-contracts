@@ -17,7 +17,7 @@ contract MathBlocksTokenTest is Test {
 
     function setUp() public {
         address o11y = address(new Observability());
-        token = new MathBlocksToken(factory, o11y, htmlRenderer);
+        token = new MathBlocksToken(factory, o11y);
         startTime = block.timestamp;
         endTime = block.timestamp + 2 days;
     }
@@ -180,6 +180,6 @@ contract MathBlocksTokenTest is Test {
             startsAtTimestamp: startTime,
             endsAtTimestamp: endTime
         });
-        token.initialize(owner, info);
+        token.initialize(owner, htmlRenderer, info);
     }
 }
