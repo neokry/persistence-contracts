@@ -2,11 +2,12 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
-import "../src/MathBlocksToken/MathBlocksFactory.sol";
-import "../src/MathBlocksToken/MathBlocksToken.sol";
+//import "../src/MathBlocksToken/MathBlocksFactory.sol";
+//import "../src/MathBlocksToken/MathBlocksToken.sol";
 import "forge-std/console2.sol";
 
 contract Mint is Script {
+    /*
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address factory = 0x81D22F3B96BCcD3785CE5701e8d778989282bCBA;
@@ -33,4 +34,5 @@ contract Mint is Script {
 
         vm.stopBroadcast();
     }
+    */
 }

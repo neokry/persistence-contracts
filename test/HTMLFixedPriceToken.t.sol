@@ -2,22 +2,40 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "../src/MathBlocksToken/MathBlocksToken.sol";
-import "../src/Observability/Observability.sol";
+import {HTMLFixedPriceToken} from "../src/tokens/HTMLFixedPriceToken.sol";
+import {IHTMLFixedPriceToken} from "../src/tokens/interfaces/IHTMLFixedPriceToken.sol";
+import {HTMLRenderer} from "../src/renderers/HTMLRenderer.sol";
+import {IToken} from "../src/tokens/interfaces/IToken.sol";
+import {Observability} from "../src/Observability/Observability.sol";
+import {IHTMLRenderer} from "../src/renderers/interfaces/IHTMLRenderer.sol";
+import {TokenProxy} from "../src/TokenProxy.sol";
+import {TokenFactory} from "../src/TokenFactory.sol";
 
-contract MathBlocksTokenTest is Test {
-    MathBlocksToken token;
+contract HTMLFixedPriceTokenTest is Test {
+    HTMLFixedPriceToken token;
     address factory = address(1);
     address owner = address(2);
     address user = address(3);
     address otherUser = address(4);
-    address htmlRenderer = address(5);
+    address rendererImpl = address(5);
+    address fileSystem = address(6);
     uint256 startTime = 0;
     uint256 endTime = 0;
+    string script = "let x = 1;";
 
     function setUp() public {
         address o11y = address(new Observability());
-        token = new MathBlocksToken(factory, o11y);
+        TokenFactory tokenFactory = new TokenFactory();
+        factory = address(tokenFactory);
+
+        address tokenImpl = address(new HTMLFixedPriceToken(factory, o11y));
+        rendererImpl = address(new HTMLRenderer(factory));
+
+        tokenFactory.registerDeployment(tokenImpl);
+        tokenFactory.registerDeployment(rendererImpl);
+
+        token = HTMLFixedPriceToken(address(new TokenProxy(tokenImpl, "")));
+
         startTime = block.timestamp;
         endTime = block.timestamp + 2 days;
     }
@@ -25,6 +43,39 @@ contract MathBlocksTokenTest is Test {
     function test_onlyFactoryCanInitilize() public {
         vm.prank(factory);
         initToken();
+
+        (
+            string memory name,
+            string memory symbol,
+            string memory description,
+            address fundsRecipent,
+            uint256 totalSupply
+        ) = token.tokenInfo();
+
+        (uint256 saleStart, uint256 saleEnd, uint256 price) = token.saleInfo();
+
+        require(
+            keccak256(abi.encodePacked(name)) ==
+                keccak256(abi.encodePacked("Test")),
+            "Invalid name"
+        );
+        require(
+            keccak256(abi.encodePacked(symbol)) ==
+                keccak256(abi.encodePacked("TST")),
+            "Invalid symbol"
+        );
+        require(
+            keccak256(abi.encodePacked(description)) ==
+                keccak256(abi.encodePacked("Test description")),
+            "Invalid description"
+        );
+        require(fundsRecipent == owner, "Invalid fundsRecipent");
+        require(totalSupply == 10, "Invalid totalSupply");
+
+        require(saleStart == startTime, "Invalid startTime");
+        require(saleEnd == endTime, "Invalid endTime");
+
+        require(price == 1 ether, "Invalid price");
     }
 
     function testRevert_onlyFactoryCanInitilize() public {
@@ -51,10 +102,22 @@ contract MathBlocksTokenTest is Test {
         vm.prank(factory);
         initToken();
 
-        vm.deal(user, 2 ether);
+        vm.deal(user, 10 ether);
 
         vm.startPrank(user);
-        token.purchase{value: 2 * 1 ether}(2);
+        token.purchase{value: 10 * 1 ether}(10);
+        vm.stopPrank();
+    }
+
+    function testRevert_soldOut() public {
+        vm.prank(factory);
+        initToken();
+
+        vm.deal(user, 11 ether);
+
+        vm.startPrank(user);
+        vm.expectRevert(IHTMLFixedPriceToken.SoldOut.selector);
+        token.purchase{value: 11 * 1 ether}(11);
         vm.stopPrank();
     }
 
@@ -67,12 +130,12 @@ contract MathBlocksTokenTest is Test {
 
         vm.startPrank(user);
 
-        vm.expectRevert(IMathBlocksToken.SaleNotActive.selector);
+        vm.expectRevert(IHTMLFixedPriceToken.SaleNotActive.selector);
         token.purchase(1);
 
         vm.warp(startTime - 1 seconds);
 
-        vm.expectRevert(IMathBlocksToken.SaleNotActive.selector);
+        vm.expectRevert(IHTMLFixedPriceToken.SaleNotActive.selector);
         token.purchase(1);
 
         vm.stopPrank();
@@ -85,7 +148,7 @@ contract MathBlocksTokenTest is Test {
         vm.deal(user, 1 ether);
 
         vm.startPrank(user);
-        vm.expectRevert(IMathBlocksToken.InvalidPrice.selector);
+        vm.expectRevert(IHTMLFixedPriceToken.InvalidPrice.selector);
         token.purchase(1);
         vm.stopPrank();
     }
@@ -164,22 +227,35 @@ contract MathBlocksTokenTest is Test {
         initToken();
 
         vm.startPrank(user);
-        vm.expectRevert(IMathBlocksToken.SenderNotMinter.selector);
+        vm.expectRevert(IToken.SenderNotMinter.selector);
         token.safeMint(user);
         vm.stopPrank();
     }
 
     function initToken() private {
-        IMathBlocksToken.TokenInfo memory info = IMathBlocksToken.TokenInfo({
+        IToken.TokenInfo memory tokenInfo = IToken.TokenInfo({
             name: "Test",
             symbol: "TST",
-            description: "Test Description",
-            script: "var i = 1;",
-            price: 1 ether,
+            description: "Test description",
             fundsRecipent: owner,
-            startsAtTimestamp: startTime,
-            endsAtTimestamp: endTime
+            totalSupply: 10
         });
-        token.initialize(owner, htmlRenderer, info);
+
+        IHTMLFixedPriceToken.SaleInfo memory saleInfo = IHTMLFixedPriceToken
+            .SaleInfo({price: 1 ether, startTime: startTime, endTime: endTime});
+
+        IHTMLRenderer.FileType[] memory imports = new IHTMLRenderer.FileType[](
+            1
+        );
+        imports[0] = IHTMLRenderer.FileType({
+            name: "Test",
+            fileType: 0,
+            fileSystem: fileSystem
+        });
+
+        token.initialize(
+            owner,
+            abi.encode(script, rendererImpl, tokenInfo, saleInfo, imports)
+        );
     }
 }
