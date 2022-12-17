@@ -17,10 +17,14 @@ contract HTMLRenderer is
     Ownable2StepUpgradeable,
     VersionedContract
 {
-    address factory;
+    address immutable factory;
 
     constructor(address _factory) {
         factory = _factory;
+    }
+
+    function initilize(address owner) external initializer {
+        _transferOwnership(owner);
     }
 
     /**

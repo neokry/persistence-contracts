@@ -11,6 +11,7 @@ import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Stri
 import {HTMLFixedPriceTokenStorageV1} from "./storage/HTMLFixedPriceTokenStorageV1.sol";
 import {ITokenFactory} from "../interfaces/ITokenFactory.sol";
 import {HTMLRendererProxy} from "../renderers/HTMLRendererProxy.sol";
+import {IHTMLRenderer} from "../renderers/interfaces/IHTMLRenderer.sol";
 
 contract HTMLFixedPriceToken is
     IHTMLFixedPriceToken,
@@ -49,7 +50,9 @@ contract HTMLFixedPriceToken is
         allowedMinters[owner] = true;
 
         script = _script;
+
         htmlRenderer = address(new HTMLRendererProxy(_rendererImpl, ""));
+        IHTMLRenderer(htmlRenderer).initilize(owner);
         tokenInfo = _tokenInfo;
         saleInfo = _saleInfo;
         _setImports(_imports);

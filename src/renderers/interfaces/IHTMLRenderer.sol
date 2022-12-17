@@ -8,6 +8,8 @@ interface IHTMLRenderer {
         uint8 fileType;
     }
 
+    function initilize(address owner) external;
+
     function generateURI(
         FileType[] calldata imports,
         string calldata script

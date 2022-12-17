@@ -3,20 +3,55 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import {HTMLRenderer} from "../src/renderers/HTMLRenderer.sol";
+import {HTMLRendererProxy} from "../src/renderers/HTMLRendererProxy.sol";
 import {IHTMLRenderer} from "../src/renderers/interfaces/IHTMLRenderer.sol";
 import {MockFileSystem} from "./utils/mocks/MockFileSystem.sol";
 import {IFileSystemAdapter} from "../src/fileSystemAdapters/interfaces/IFileSystemAdapter.sol";
 import {Base64URIDecoder} from "./utils/Base64URIDecoder.sol";
+import {TokenFactory} from "../src/TokenFactory.sol";
 
 contract HTMLRendererTest is Test {
-    address factory = address(1);
+    address factory;
+    address owner = address(1);
+    address notOwner = address(2);
+    address upgradeImpl;
     IFileSystemAdapter mockFS;
 
     HTMLRenderer renderer;
 
     function setUp() public {
-        renderer = new HTMLRenderer(factory);
+        TokenFactory factoryContract = new TokenFactory();
+        factory = address(factoryContract);
+
+        address rendererImpl = address(new HTMLRenderer(factory));
+        upgradeImpl = address(new HTMLRenderer(factory));
+
+        factoryContract.registerUpgrade(rendererImpl, upgradeImpl);
+
+        renderer = HTMLRenderer(
+            address(new HTMLRendererProxy(rendererImpl, ""))
+        );
+        renderer.initilize(owner);
         mockFS = new MockFileSystem();
+    }
+
+    function test_upgrade() public {
+        vm.prank(owner);
+        renderer.upgradeTo(upgradeImpl);
+    }
+
+    function testRevert_upgradeNotValid() public {
+        vm.prank(owner);
+        vm.expectRevert(
+            abi.encodeWithSignature("InvalidUpgrade(address)", address(this))
+        );
+        renderer.upgradeTo(address(this));
+    }
+
+    function testRevert_upgradeNotOwner() public {
+        vm.prank(notOwner);
+        vm.expectRevert("Ownable: caller is not the owner");
+        renderer.upgradeTo(upgradeImpl);
     }
 
     function test_generateURI() public view {

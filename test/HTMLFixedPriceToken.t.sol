@@ -10,6 +10,7 @@ import {Observability} from "../src/Observability/Observability.sol";
 import {IHTMLRenderer} from "../src/renderers/interfaces/IHTMLRenderer.sol";
 import {TokenProxy} from "../src/TokenProxy.sol";
 import {TokenFactory} from "../src/TokenFactory.sol";
+import {ITokenFactory} from "../src/interfaces/ITokenFactory.sol";
 
 contract HTMLFixedPriceTokenTest is Test {
     HTMLFixedPriceToken token;
@@ -19,6 +20,7 @@ contract HTMLFixedPriceTokenTest is Test {
     address otherUser = address(4);
     address rendererImpl = address(5);
     address fileSystem = address(6);
+    address tokenImplUpgrade;
     uint256 startTime = 0;
     uint256 endTime = 0;
     string script = "let x = 1;";
@@ -29,10 +31,14 @@ contract HTMLFixedPriceTokenTest is Test {
         factory = address(tokenFactory);
 
         address tokenImpl = address(new HTMLFixedPriceToken(factory, o11y));
+
+        tokenImplUpgrade = address(new HTMLFixedPriceToken(factory, o11y));
         rendererImpl = address(new HTMLRenderer(factory));
 
         tokenFactory.registerDeployment(tokenImpl);
         tokenFactory.registerDeployment(rendererImpl);
+
+        tokenFactory.registerUpgrade(tokenImpl, tokenImplUpgrade);
 
         token = HTMLFixedPriceToken(address(new TokenProxy(tokenImpl, "")));
 
@@ -229,6 +235,59 @@ contract HTMLFixedPriceTokenTest is Test {
         vm.startPrank(user);
         vm.expectRevert(IToken.SenderNotMinter.selector);
         token.safeMint(user);
+        vm.stopPrank();
+    }
+
+    function test_upgrade() public {
+        vm.prank(factory);
+        initToken();
+
+        vm.startPrank(owner);
+        token.upgradeTo(tokenImplUpgrade);
+        vm.stopPrank();
+    }
+
+    function testRevert_upgradeNotRegistered() public {
+        vm.prank(factory);
+        initToken();
+
+        vm.startPrank(owner);
+        vm.expectRevert(
+            abi.encodeWithSignature("InvalidUpgrade(address)", address(this))
+        );
+        token.upgradeTo(address(this));
+        vm.stopPrank();
+    }
+
+    function testRevert_upgradeNotOwner() public {
+        vm.prank(factory);
+        initToken();
+
+        vm.startPrank(user);
+        vm.expectRevert("Ownable: caller is not the owner");
+        token.upgradeTo(tokenImplUpgrade);
+        vm.stopPrank();
+    }
+
+    function testRevert_upgradeToAndCallNotRegistered() public {
+        vm.prank(factory);
+        initToken();
+
+        vm.startPrank(owner);
+        vm.expectRevert(
+            abi.encodeWithSignature("InvalidUpgrade(address)", address(this))
+        );
+        token.upgradeToAndCall(address(this), "");
+        vm.stopPrank();
+    }
+
+    function testRevert_upgradeToAndCallNotOwner() public {
+        vm.prank(factory);
+        initToken();
+
+        vm.startPrank(user);
+        vm.expectRevert("Ownable: caller is not the owner");
+        token.upgradeToAndCall(tokenImplUpgrade, "");
         vm.stopPrank();
     }
 
