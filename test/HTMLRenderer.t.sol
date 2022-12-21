@@ -2,9 +2,9 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import {HTMLRenderer} from "../src/renderers/HTMLRenderer.sol";
-import {HTMLRendererProxy} from "../src/renderers/HTMLRendererProxy.sol";
-import {IHTMLRenderer} from "../src/renderers/interfaces/IHTMLRenderer.sol";
+import {HTMLRenderer} from "../src/renderer/HTMLRenderer.sol";
+import {HTMLRendererProxy} from "../src/renderer/HTMLRendererProxy.sol";
+import {IHTMLRenderer} from "../src/renderer/interfaces/IHTMLRenderer.sol";
 import {MockFileSystem} from "./utils/mocks/MockFileSystem.sol";
 import {IFileSystemAdapter} from "../src/fileSystemAdapters/interfaces/IFileSystemAdapter.sol";
 import {Base64URIDecoder} from "./utils/Base64URIDecoder.sol";

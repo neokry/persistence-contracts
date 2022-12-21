@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-interface IHTMLFixedPriceToken {
+interface IFixedPriceToken {
     struct SaleInfo {
         uint256 startTime;
         uint256 endTime;

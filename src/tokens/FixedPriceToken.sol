@@ -2,21 +2,21 @@
 pragma solidity ^0.8.13;
 
 import {TokenBase} from "../TokenBase.sol";
-import {IHTMLRenderer} from "../renderers/interfaces/IHTMLRenderer.sol";
+import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
 import {NFTDescriptor} from "../lib/utils/NFTDescriptor.sol";
 import {IObservability} from "../Observability/Observability.sol";
-import {IHTMLFixedPriceToken} from "./interfaces/IHTMLFixedPriceToken.sol";
-import {IHTMLRenderer} from "../renderers/interfaces/IHTMLRenderer.sol";
+import {IFixedPriceToken} from "./interfaces/IFixedPriceToken.sol";
+import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
 import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
-import {HTMLFixedPriceTokenStorageV1} from "./storage/HTMLFixedPriceTokenStorageV1.sol";
+import {FixedPriceTokenStorageV1} from "./storage/FixedPriceTokenStorageV1.sol";
 import {ITokenFactory} from "../interfaces/ITokenFactory.sol";
-import {HTMLRendererProxy} from "../renderers/HTMLRendererProxy.sol";
-import {IHTMLRenderer} from "../renderers/interfaces/IHTMLRenderer.sol";
+import {HTMLRendererProxy} from "../renderer/HTMLRendererProxy.sol";
+import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
 
-contract HTMLFixedPriceToken is
-    IHTMLFixedPriceToken,
+contract FixedPriceToken is
+    IFixedPriceToken,
     TokenBase,
-    HTMLFixedPriceTokenStorageV1
+    FixedPriceTokenStorageV1
 {
     using StringsUpgradeable for uint256;
 

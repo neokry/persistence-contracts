@@ -2,18 +2,18 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import {HTMLFixedPriceToken} from "../src/tokens/HTMLFixedPriceToken.sol";
-import {IHTMLFixedPriceToken} from "../src/tokens/interfaces/IHTMLFixedPriceToken.sol";
-import {HTMLRenderer} from "../src/renderers/HTMLRenderer.sol";
+import {FixedPriceToken} from "../src/tokens/FixedPriceToken.sol";
+import {IFixedPriceToken} from "../src/tokens/interfaces/IFixedPriceToken.sol";
+import {HTMLRenderer} from "../src/renderer/HTMLRenderer.sol";
 import {IToken} from "../src/tokens/interfaces/IToken.sol";
 import {Observability} from "../src/Observability/Observability.sol";
-import {IHTMLRenderer} from "../src/renderers/interfaces/IHTMLRenderer.sol";
+import {IHTMLRenderer} from "../src/renderer/interfaces/IHTMLRenderer.sol";
 import {TokenProxy} from "../src/TokenProxy.sol";
 import {TokenFactory} from "../src/TokenFactory.sol";
 import {ITokenFactory} from "../src/interfaces/ITokenFactory.sol";
 
-contract HTMLFixedPriceTokenTest is Test {
-    HTMLFixedPriceToken token;
+contract FixedPriceTokenTest is Test {
+    FixedPriceToken token;
     address factory = address(1);
     address owner = address(2);
     address user = address(3);
@@ -30,9 +30,9 @@ contract HTMLFixedPriceTokenTest is Test {
         TokenFactory tokenFactory = new TokenFactory();
         factory = address(tokenFactory);
 
-        address tokenImpl = address(new HTMLFixedPriceToken(factory, o11y));
+        address tokenImpl = address(new FixedPriceToken(factory, o11y));
 
-        tokenImplUpgrade = address(new HTMLFixedPriceToken(factory, o11y));
+        tokenImplUpgrade = address(new FixedPriceToken(factory, o11y));
         rendererImpl = address(new HTMLRenderer(factory));
 
         tokenFactory.registerDeployment(tokenImpl);
@@ -40,7 +40,7 @@ contract HTMLFixedPriceTokenTest is Test {
 
         tokenFactory.registerUpgrade(tokenImpl, tokenImplUpgrade);
 
-        token = HTMLFixedPriceToken(address(new TokenProxy(tokenImpl, "")));
+        token = FixedPriceToken(address(new TokenProxy(tokenImpl, "")));
 
         startTime = block.timestamp;
         endTime = block.timestamp + 2 days;
@@ -122,7 +122,7 @@ contract HTMLFixedPriceTokenTest is Test {
         vm.deal(user, 11 ether);
 
         vm.startPrank(user);
-        vm.expectRevert(IHTMLFixedPriceToken.SoldOut.selector);
+        vm.expectRevert(IFixedPriceToken.SoldOut.selector);
         token.purchase{value: 11 * 1 ether}(11);
         vm.stopPrank();
     }
@@ -136,12 +136,12 @@ contract HTMLFixedPriceTokenTest is Test {
 
         vm.startPrank(user);
 
-        vm.expectRevert(IHTMLFixedPriceToken.SaleNotActive.selector);
+        vm.expectRevert(IFixedPriceToken.SaleNotActive.selector);
         token.purchase(1);
 
         vm.warp(startTime - 1 seconds);
 
-        vm.expectRevert(IHTMLFixedPriceToken.SaleNotActive.selector);
+        vm.expectRevert(IFixedPriceToken.SaleNotActive.selector);
         token.purchase(1);
 
         vm.stopPrank();
@@ -154,7 +154,7 @@ contract HTMLFixedPriceTokenTest is Test {
         vm.deal(user, 1 ether);
 
         vm.startPrank(user);
-        vm.expectRevert(IHTMLFixedPriceToken.InvalidPrice.selector);
+        vm.expectRevert(IFixedPriceToken.InvalidPrice.selector);
         token.purchase(1);
         vm.stopPrank();
     }
@@ -300,8 +300,11 @@ contract HTMLFixedPriceTokenTest is Test {
             totalSupply: 10
         });
 
-        IHTMLFixedPriceToken.SaleInfo memory saleInfo = IHTMLFixedPriceToken
-            .SaleInfo({price: 1 ether, startTime: startTime, endTime: endTime});
+        IFixedPriceToken.SaleInfo memory saleInfo = IFixedPriceToken.SaleInfo({
+            price: 1 ether,
+            startTime: startTime,
+            endTime: endTime
+        });
 
         IHTMLRenderer.FileType[] memory imports = new IHTMLRenderer.FileType[](
             1
