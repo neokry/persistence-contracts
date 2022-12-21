@@ -4,8 +4,7 @@ import {IFixedPriceToken} from "../interfaces/IFixedPriceToken.sol";
 import {IHTMLRenderer} from "../../renderer/interfaces/IHTMLRenderer.sol";
 
 abstract contract FixedPriceTokenStorageV1 {
-    /// @notice The users script to be renderered
-    string script;
+    address scriptPointer;
 
     /// @notice The html renderer to use
     address htmlRenderer;

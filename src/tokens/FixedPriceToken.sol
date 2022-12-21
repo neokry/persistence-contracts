@@ -12,6 +12,7 @@ import {FixedPriceTokenStorageV1} from "./storage/FixedPriceTokenStorageV1.sol";
 import {ITokenFactory} from "../interfaces/ITokenFactory.sol";
 import {HTMLRendererProxy} from "../renderer/HTMLRendererProxy.sol";
 import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
+import {IFileStore} from "ethfs/IFileStore.sol";
 
 contract FixedPriceToken is
     IFixedPriceToken,
@@ -19,6 +20,7 @@ contract FixedPriceToken is
     FixedPriceTokenStorageV1
 {
     using StringsUpgradeable for uint256;
+    using StringsUpgradeable for address;
 
     //[[[[SETUP FUNCTIONS]]]]
 
@@ -48,8 +50,6 @@ contract FixedPriceToken is
         _transferOwnership(owner);
 
         allowedMinters[owner] = true;
-
-        script = _script;
 
         htmlRenderer = address(new HTMLRendererProxy(_rendererImpl, ""));
         IHTMLRenderer(htmlRenderer).initilize(owner);
@@ -100,13 +100,13 @@ contract FixedPriceToken is
                 description: _description,
                 animation_url: IHTMLRenderer(htmlRenderer).generateURI(
                     imports,
-                    generateScript(seed, tokenId)
+                    generateGlobals(seed, tokenId)
                 )
             });
         return NFTDescriptor.constructTokenURI(params);
     }
 
-    function generateScript(
+    function generateGlobals(
         uint256 seed,
         string memory tokenId
     ) public view returns (string memory) {
@@ -119,15 +119,26 @@ contract FixedPriceToken is
                 '";var timestamp=Number("',
                 block.timestamp.toString(),
                 '");',
-                script,
                 "</script>"
             );
+    }
+
+    //[[[[SCRIPT FUNCTIONS]]]]
+    function storeScript(string calldata script) public onlyOwner {
+        string memory fileName = string.concat(tokenInfo.name, ".js");
+        IFileStore(ethFS).createFile(fileName, script);
     }
 
     //[[[[RENDERER FUNCTIONS]]]]
 
     function setHTMLRenderer(address _htmlRenderer) external onlyOwner {
         htmlRenderer = _htmlRenderer;
+    }
+
+    function addImport(
+        IHTMLRenderer.FileType calldata _import
+    ) external onlyOwner {
+        _addImport(_import);
     }
 
     function setImports(
@@ -155,6 +166,9 @@ contract FixedPriceToken is
     }
 
     //[[[[PRIVATE FUNCTIONS]]]]
+    function _addImport(IHTMLRenderer.FileType memory _import) private {
+        imports.push(_import);
+    }
 
     function _setImports(IHTMLRenderer.FileType[] memory _imports) private {
         uint256 numImports = _imports.length - 1;
