@@ -13,6 +13,7 @@ import {ITokenFactory} from "../interfaces/ITokenFactory.sol";
 import {HTMLRendererProxy} from "../renderer/HTMLRendererProxy.sol";
 import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
 import {IFileStore} from "ethfs/IFileStore.sol";
+import {SSTORE2} from "@0xsequence/sstore2/contracts/SSTORE2.sol";
 
 contract FixedPriceToken is
     IFixedPriceToken,
@@ -56,6 +57,7 @@ contract FixedPriceToken is
         tokenInfo = _tokenInfo;
         saleInfo = _saleInfo;
         _setImports(_imports);
+        _setScript(_script);
     }
 
     //[[[[VIEW FUNCTIONS]]]]
@@ -68,7 +70,7 @@ contract FixedPriceToken is
             genericDataURI(
                 fullName,
                 tokenInfo.description,
-                tokenIdToSeed[tokenId],
+                tokenIdToPreviousBlockHash[tokenId],
                 tokenId.toString()
             );
     }
@@ -83,7 +85,7 @@ contract FixedPriceToken is
             genericDataURI(
                 fullName,
                 tokenInfo.description,
-                tokenIdToSeed[tokenId],
+                tokenIdToPreviousBlockHash[tokenId],
                 tokenId.toString()
             );
     }
@@ -91,7 +93,7 @@ contract FixedPriceToken is
     function genericDataURI(
         string memory _name,
         string memory _description,
-        uint256 seed,
+        bytes32 mintedPreviousBlockHash,
         string memory tokenId
     ) public view returns (string memory) {
         NFTDescriptor.TokenURIParams memory params = NFTDescriptor
@@ -100,33 +102,38 @@ contract FixedPriceToken is
                 description: _description,
                 animation_url: IHTMLRenderer(htmlRenderer).generateURI(
                     imports,
-                    generateGlobals(seed, tokenId)
+                    generateFullScript(mintedPreviousBlockHash, tokenId)
                 )
             });
         return NFTDescriptor.constructTokenURI(params);
     }
 
-    function generateGlobals(
-        uint256 seed,
+    function generateFullScript(
+        bytes32 mintedPreviousBlockHash,
         string memory tokenId
     ) public view returns (string memory) {
         return
             string.concat(
-                '<script>var seed=Number("',
-                seed.toString(),
-                '".slice(0,20));var tokenId="',
+                '<script>var blockHash="',
+                uint256(mintedPreviousBlockHash).toString(),
+                '";var tokenId="',
                 tokenId,
                 '";var timestamp=Number("',
                 block.timestamp.toString(),
                 '");',
+                getScript(),
                 "</script>"
             );
     }
 
+    function getScript() public view returns (string memory) {
+        return string(SSTORE2.read(scriptPointer));
+    }
+
     //[[[[SCRIPT FUNCTIONS]]]]
-    function storeScript(string calldata script) public onlyOwner {
-        string memory fileName = string.concat(tokenInfo.name, ".js");
-        IFileStore(ethFS).createFile(fileName, script);
+
+    function setScript(string memory script) public onlyOwner {
+        _setScript(script);
     }
 
     //[[[[RENDERER FUNCTIONS]]]]
@@ -175,5 +182,9 @@ contract FixedPriceToken is
         for (uint256 i; i < numImports; i++) {
             imports[i] = _imports[i];
         }
+    }
+
+    function _setScript(string memory script) private {
+        scriptPointer = SSTORE2.write(bytes(script));
     }
 }

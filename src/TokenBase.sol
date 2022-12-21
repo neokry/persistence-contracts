@@ -23,7 +23,7 @@ abstract contract TokenBase is
 
     CountersUpgradeable.Counter private _tokenIdCounter;
 
-    mapping(uint256 => uint256) public tokenIdToSeed;
+    mapping(uint256 => bytes32) public tokenIdToPreviousBlockHash;
     mapping(address => bool) public allowedMinters;
 
     address public immutable factory;
@@ -89,9 +89,7 @@ abstract contract TokenBase is
     function _seedAndMint(address to) internal {
         uint256 tokenId = _tokenIdCounter.current();
 
-        tokenIdToSeed[tokenId] = uint256(
-            keccak256(abi.encodePacked(blockhash(block.number - 1), tokenId))
-        );
+        tokenIdToPreviousBlockHash[tokenId] = blockhash(block.number - 1);
 
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);

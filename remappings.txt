@@ -2,3 +2,4 @@
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 base64-sol/=lib/base64/
 ethfs/=lib/ethfs/packages/contracts/src
+@0xsequence/sstore2/=lib/sstore2
