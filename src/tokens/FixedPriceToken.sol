@@ -3,7 +3,6 @@ pragma solidity ^0.8.13;
 
 import {TokenBase} from "../TokenBase.sol";
 import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
-import {NFTDescriptor} from "../lib/utils/NFTDescriptor.sol";
 import {IObservability} from "../Observability/Observability.sol";
 import {IFixedPriceToken} from "./interfaces/IFixedPriceToken.sol";
 import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
@@ -14,6 +13,7 @@ import {HTMLRendererProxy} from "../renderer/HTMLRendererProxy.sol";
 import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
 import {IFileStore} from "ethfs/IFileStore.sol";
 import {SSTORE2} from "@0xsequence/sstore2/contracts/SSTORE2.sol";
+import {Base64} from "base64-sol/base64.sol";
 
 contract FixedPriceToken is
     IFixedPriceToken,
@@ -56,7 +56,7 @@ contract FixedPriceToken is
         IHTMLRenderer(htmlRenderer).initilize(owner);
         tokenInfo = _tokenInfo;
         saleInfo = _saleInfo;
-        _setImports(_imports);
+        _addManyImports(_imports);
         _setScript(_script);
     }
 
@@ -96,16 +96,31 @@ contract FixedPriceToken is
         bytes32 mintedPreviousBlockHash,
         string memory tokenId
     ) public view returns (string memory) {
-        NFTDescriptor.TokenURIParams memory params = NFTDescriptor
-            .TokenURIParams({
-                name: _name,
-                description: _description,
-                animation_url: IHTMLRenderer(htmlRenderer).generateURI(
-                    imports,
-                    generateFullScript(mintedPreviousBlockHash, tokenId)
+        return
+            string(
+                abi.encodePacked(
+                    "data:application/json;base64,",
+                    Base64.encode(
+                        bytes(
+                            abi.encodePacked(
+                                '{"name":"',
+                                _name,
+                                '", "description":"',
+                                _description,
+                                '", "animation_url": "',
+                                IHTMLRenderer(htmlRenderer).generateURI(
+                                    imports,
+                                    generateFullScript(
+                                        mintedPreviousBlockHash,
+                                        tokenId
+                                    )
+                                ),
+                                '"}'
+                            )
+                        )
+                    )
                 )
-            });
-        return NFTDescriptor.constructTokenURI(params);
+            );
     }
 
     function generateFullScript(
@@ -118,9 +133,9 @@ contract FixedPriceToken is
                 uint256(mintedPreviousBlockHash).toString(),
                 '";var tokenId="',
                 tokenId,
-                '";var timestamp=Number("',
+                '";var timestamp="',
                 block.timestamp.toString(),
-                '");',
+                '";',
                 getScript(),
                 "</script>"
             );
@@ -142,16 +157,10 @@ contract FixedPriceToken is
         htmlRenderer = _htmlRenderer;
     }
 
-    function addImport(
-        IHTMLRenderer.FileType calldata _import
-    ) external onlyOwner {
-        _addImport(_import);
-    }
-
-    function setImports(
+    function addManyImports(
         IHTMLRenderer.FileType[] calldata _imports
     ) external onlyOwner {
-        _setImports(_imports);
+        _addManyImports(_imports);
     }
 
     //[[[[PURCHASE FUNCTIONS]]]]
@@ -172,16 +181,16 @@ contract FixedPriceToken is
         }
     }
 
+    function _addManyImports(IHTMLRenderer.FileType[] memory _imports) private {
+        uint256 numImports = _imports.length;
+        for (uint256 i; i < numImports; i++) {
+            _addImport(_imports[i]);
+        }
+    }
+
     //[[[[PRIVATE FUNCTIONS]]]]
     function _addImport(IHTMLRenderer.FileType memory _import) private {
         imports.push(_import);
-    }
-
-    function _setImports(IHTMLRenderer.FileType[] memory _imports) private {
-        uint256 numImports = _imports.length - 1;
-        for (uint256 i; i < numImports; i++) {
-            imports[i] = _imports[i];
-        }
     }
 
     function _setScript(string memory script) private {

@@ -15,7 +15,6 @@ contract Deploy is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         // Deploy Contracts
-
         TokenFactory factory = new TokenFactory();
 
         console2.log("factory:");
@@ -26,10 +25,12 @@ contract Deploy is Script {
         console2.log("renderer:");
         console2.log(address(renderer));
 
-        FixedPriceToken impl = new FixedPriceToken(
-            address(factory),
-            address(factory.o11y())
-        );
+        address o11y = address(factory.o11y());
+
+        console2.log("o11y:");
+        console2.log(address(o11y));
+
+        FixedPriceToken impl = new FixedPriceToken(address(factory), o11y);
 
         console2.log("impl:");
         console2.log(address(impl));
@@ -42,7 +43,6 @@ contract Deploy is Script {
         console2.log(address(ethFSAdapter));
 
         // Register deployments
-
         factory.registerDeployment(address(renderer));
         factory.registerDeployment(address(impl));
 
