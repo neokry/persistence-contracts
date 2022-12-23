@@ -5,9 +5,9 @@ import {IHTMLRenderer} from "../../renderer/interfaces/IHTMLRenderer.sol";
 
 interface IFixedPriceToken {
     struct SaleInfo {
-        uint256 startTime;
-        uint256 endTime;
-        uint256 price;
+        uint64 startTime;
+        uint64 endTime;
+        uint128 price;
     }
 
     error SaleNotActive();

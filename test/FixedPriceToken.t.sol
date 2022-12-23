@@ -22,8 +22,8 @@ contract FixedPriceTokenTest is Test {
     address rendererImpl = address(5);
     address fileSystem = address(6);
     address tokenImplUpgrade;
-    uint256 startTime = 0;
-    uint256 endTime = 0;
+    uint64 startTime = 0;
+    uint64 endTime = 0;
     string script = "let x = 1;";
     string previewBaseURI = "https://example.com/";
 
@@ -46,8 +46,8 @@ contract FixedPriceTokenTest is Test {
 
         token = FixedPriceToken(address(new TokenProxy(tokenImpl, "")));
 
-        startTime = block.timestamp;
-        endTime = block.timestamp + 2 days;
+        startTime = uint64(block.timestamp);
+        endTime = uint64(block.timestamp + 2 days);
     }
 
     function test_onlyFactoryCanInitilize() public {
