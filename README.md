@@ -18,7 +18,7 @@
 ### Flexibility and safety
 
 All drops contracts are wholly owned by their creator and allow for extensibility with rendering and minting.
-The root token contract can be upgraded to allow for product upgrades and the factory gates allowed upgrade paths
+The root token contract and HTML renderer can be upgraded to allow for product upgrades and the factory gates allowed upgrade paths
 so users of the contract can opt into new features.
 
 The html renderer allows these generative art contracts to import from a variaty of onchain libraries.
