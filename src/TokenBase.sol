@@ -33,6 +33,7 @@ abstract contract TokenBase is
     TokenInfo public tokenInfo;
 
     //[[[[MODIFIERS]]]]
+    /// @notice restricts to only users with minter role
     modifier onlyAllowedMinter() {
         if (!allowedMinters[msg.sender]) revert SenderNotMinter();
         _;
@@ -46,12 +47,15 @@ abstract contract TokenBase is
     }
 
     //[[[[VIEW FUNCTIONS]]]]
+
+    /// @notice gets the total supply of tokens
     function totalSupply() public view returns (uint256) {
         return _tokenIdCounter.current();
     }
 
     //[[[[WITHDRAW FUNCTIONS]]]]
 
+    /// @notice withdraws the funds from the contract
     function withdraw() external nonReentrant returns (bool) {
         uint256 amount = address(this).balance;
 
@@ -70,22 +74,26 @@ abstract contract TokenBase is
         return successFunds;
     }
 
+    /// @notice sets the funds recipent for token funds
     function setFundsRecipent(address fundsRecipent) external onlyOwner {
         tokenInfo.fundsRecipent = fundsRecipent;
     }
 
     //[[[[MINT FUNCTIONS]]]]
 
+    /// @notice sets the minter role for the given user
     function setMinter(address user, bool isAllowed) public onlyOwner {
         allowedMinters[user] = isAllowed;
     }
 
+    /// @notice mint a token for the given address
     function safeMint(address to) public onlyAllowedMinter {
         _seedAndMint(to);
     }
 
     //[[[[PRIVATE FUNCTIONS]]]]
 
+    /// @notice seeds the token id and mints the token
     function _seedAndMint(address to) internal {
         uint256 tokenId = _tokenIdCounter.current();
 
@@ -95,6 +103,7 @@ abstract contract TokenBase is
         _safeMint(to, tokenId);
     }
 
+    /// @notice checks if an upgrade is valid
     function _authorizeUpgrade(address newImpl) internal override onlyOwner {
         if (
             !ITokenFactory(factory).isValidUpgrade(

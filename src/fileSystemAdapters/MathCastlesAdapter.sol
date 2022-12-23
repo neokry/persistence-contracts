@@ -11,6 +11,7 @@ contract MathCastlesAdapter is IFileSystemAdapter {
         libraryStorage = _libraryStorage;
     }
 
+    /// @notice Returns the file contents from math castles library storage
     function getFile(
         string calldata fileName
     ) external view returns (string memory) {

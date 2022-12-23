@@ -14,9 +14,18 @@ interface IToken {
     error SenderNotMinter();
     error FundsSendFailure();
 
+    /// @notice returns the total supply of tokens
+    function totalSupply() external returns (uint256);
+
+    /// @notice withdraws the funds from the contract
     function withdraw() external returns (bool);
 
+    /// @notice mint a token for the given address
     function safeMint(address to) external;
 
-    function initialize(address owner, bytes calldata data) external;
+    /// @notice sets the funds recipent for token funds
+    function setFundsRecipent(address fundsRecipent) external;
+
+    /// @notice sets the minter status for the given user
+    function setMinter(address user, bool isAllowed) external;
 }

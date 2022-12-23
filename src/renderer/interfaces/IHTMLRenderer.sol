@@ -10,6 +10,7 @@ interface IHTMLRenderer {
 
     function initilize(address owner) external;
 
+    /// @notice Returns the HTML for the given script and imports
     function generateURI(
         FileType[] calldata imports,
         string calldata script

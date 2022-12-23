@@ -23,12 +23,13 @@ contract HTMLRenderer is
         factory = _factory;
     }
 
+    /// @notice set the owner of the contract
     function initilize(address owner) external initializer {
         _transferOwnership(owner);
     }
 
     /**
-     * @notice Construct an html URI.
+     * @notice Construct an html URI from the given script and imports.
      */
     function generateURI(
         FileType[] calldata imports,
@@ -50,18 +51,20 @@ contract HTMLRenderer is
             );
     }
 
+    /// @notice Returns the HTML for the given imports
     function generateManyFileImports(
-        FileType[] calldata scripts
+        FileType[] calldata _imports
     ) public view returns (string memory) {
         string memory imports = "";
 
-        for (uint256 i = 0; i < scripts.length; i++) {
-            imports = string.concat(imports, generateFileImport(scripts[i]));
+        for (uint256 i = 0; i < _imports.length; i++) {
+            imports = string.concat(imports, generateFileImport(_imports[i]));
         }
 
         return imports;
     }
 
+    /// @notice Returns the HTML for a single import
     function generateFileImport(
         FileType calldata script
     ) public view returns (string memory) {
@@ -91,6 +94,7 @@ contract HTMLRenderer is
         revert("Invalid file type");
     }
 
+    /// @notice check if the upgrade is valid
     function _authorizeUpgrade(address newImpl) internal override onlyOwner {
         if (
             !ITokenFactory(factory).isValidUpgrade(

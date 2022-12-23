@@ -11,6 +11,7 @@ contract ETHFSAdapter is IFileSystemAdapter {
         fileStoreAddress = _fileStoreAddress;
     }
 
+    /// @notice Returns the file contents from ETH FS
     function getFile(
         string calldata fileName
     ) external view returns (string memory) {

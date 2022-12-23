@@ -21,12 +21,12 @@ contract FixedPriceToken is
     FixedPriceTokenStorageV1
 {
     using StringsUpgradeable for uint256;
-    using StringsUpgradeable for address;
 
     //[[[[SETUP FUNCTIONS]]]]
 
     constructor(address _factory, address _o11y) TokenBase(_factory, _o11y) {}
 
+    /// @notice Initializes the token
     function initialize(
         address owner,
         bytes calldata data
@@ -35,13 +35,21 @@ contract FixedPriceToken is
 
         (
             string memory _script,
+            string memory _previewBaseURI,
             address _rendererImpl,
             TokenInfo memory _tokenInfo,
             SaleInfo memory _saleInfo,
             IHTMLRenderer.FileType[] memory _imports
         ) = abi.decode(
                 data,
-                (string, address, TokenInfo, SaleInfo, IHTMLRenderer.FileType[])
+                (
+                    string,
+                    string,
+                    address,
+                    TokenInfo,
+                    SaleInfo,
+                    IHTMLRenderer.FileType[]
+                )
             );
 
         if (!(ITokenFactory(factory).isValidDeployment(_rendererImpl)))
@@ -58,81 +66,84 @@ contract FixedPriceToken is
         saleInfo = _saleInfo;
         _addManyImports(_imports);
         _setScript(_script);
+        _setPreviewBaseURI(_previewBaseURI);
     }
 
     //[[[[VIEW FUNCTIONS]]]]
 
-    function contractURI(uint256 tokenId) public view returns (string memory) {
-        string memory fullName = string(
-            abi.encodePacked(name(), " ", tokenId.toString())
-        );
-        return
-            genericDataURI(
-                fullName,
-                tokenInfo.description,
-                tokenIdToPreviousBlockHash[tokenId],
-                tokenId.toString()
-            );
-    }
-
+    /// @notice returns token metadata for a given token id
     function tokenURI(
         uint256 tokenId
     ) public view override returns (string memory) {
+        string memory tokenIdString = tokenId.toString();
         string memory fullName = string(
-            abi.encodePacked(name(), " ", tokenId.toString())
+            abi.encodePacked(name(), " ", tokenIdString)
         );
+        string memory animationURL = IHTMLRenderer(htmlRenderer).generateURI(
+            imports,
+            generateFullScript(tokenId)
+        );
+        string memory image = generatePreviewURI(tokenIdString);
         return
             genericDataURI(
                 fullName,
                 tokenInfo.description,
-                tokenIdToPreviousBlockHash[tokenId],
-                tokenId.toString()
+                animationURL,
+                image
             );
     }
 
+    /// @notice contruct a generic data URI from token data
     function genericDataURI(
         string memory _name,
         string memory _description,
-        bytes32 mintedPreviousBlockHash,
-        string memory tokenId
-    ) public view returns (string memory) {
+        string memory _animationURL,
+        string memory _image
+    ) public pure returns (string memory) {
         return
-            string(
-                abi.encodePacked(
-                    "data:application/json;base64,",
-                    Base64.encode(
-                        bytes(
-                            abi.encodePacked(
-                                '{"name":"',
-                                _name,
-                                '", "description":"',
-                                _description,
-                                '", "animation_url": "',
-                                IHTMLRenderer(htmlRenderer).generateURI(
-                                    imports,
-                                    generateFullScript(
-                                        mintedPreviousBlockHash,
-                                        tokenId
-                                    )
-                                ),
-                                '"}'
-                            )
+            string.concat(
+                "data:application/json;base64,",
+                Base64.encode(
+                    bytes(
+                        string.concat(
+                            '{"name":"',
+                            _name,
+                            '", "description":"',
+                            _description,
+                            '", "animation_url": "',
+                            _animationURL,
+                            '", "image": "',
+                            _image,
+                            '"}'
                         )
                     )
                 )
             );
     }
 
-    function generateFullScript(
-        bytes32 mintedPreviousBlockHash,
+    /// @notice generate a preview URI for the token
+    function generatePreviewURI(
         string memory tokenId
     ) public view returns (string memory) {
         return
             string.concat(
+                previewBaseURI,
+                uint256(uint160(address(this))).toHexString(20),
+                "/",
+                tokenId
+            );
+    }
+
+    /// @notice generate the full script for the token
+    function generateFullScript(
+        uint256 tokenId
+    ) public view returns (string memory) {
+        return
+            string.concat(
                 '<script>var blockHash="',
-                uint256(mintedPreviousBlockHash).toString(),
+                uint256(tokenIdToPreviousBlockHash[tokenId]).toString(),
                 '";var tokenId="',
-                tokenId,
+                tokenId.toString(),
                 '";var timestamp="',
                 block.timestamp.toString(),
                 '";',
@@ -141,30 +152,50 @@ contract FixedPriceToken is
             );
     }
 
+    /// @notice get the script for the contract
     function getScript() public view returns (string memory) {
         return string(SSTORE2.read(scriptPointer));
     }
 
     //[[[[SCRIPT FUNCTIONS]]]]
 
+    /// @notice set the script for the contract
     function setScript(string memory script) public onlyOwner {
         _setScript(script);
     }
 
+    //[[[[PREVIEW FUNCTIONS]]]]
+
+    /// @notice get the preview base URI for the token
+    function setPreviewBaseURL(string memory uri) public onlyOwner {
+        _setPreviewBaseURI(uri);
+    }
+
     //[[[[RENDERER FUNCTIONS]]]]
 
+    /// @notice set the html renderer for the token
     function setHTMLRenderer(address _htmlRenderer) external onlyOwner {
         htmlRenderer = _htmlRenderer;
     }
 
+    /// @notice add multiple imports to the token
     function addManyImports(
         IHTMLRenderer.FileType[] calldata _imports
     ) external onlyOwner {
         _addManyImports(_imports);
     }
 
+    /// @notice set a single import to the token for a given index
+    function setImport(
+        uint256 index,
+        IHTMLRenderer.FileType calldata _import
+    ) external onlyOwner {
+        _setImport(index, _import);
+    }
+
     //[[[[PURCHASE FUNCTIONS]]]]
 
+    /// @notice purchase a number of tokens
     function purchase(uint256 amount) external payable nonReentrant {
         if (
             block.timestamp < saleInfo.startTime ||
@@ -181,6 +212,13 @@ contract FixedPriceToken is
         }
     }
 
+    //[[[[PRIVATE FUNCTIONS]]]]
+    /// @notice adds a single import
+    function _addImport(IHTMLRenderer.FileType memory _import) private {
+        imports.push(_import);
+    }
+
+    /// @notice adds many imports
     function _addManyImports(IHTMLRenderer.FileType[] memory _imports) private {
         uint256 numImports = _imports.length;
         for (uint256 i; i < numImports; i++) {
@@ -188,12 +226,21 @@ contract FixedPriceToken is
         }
     }
 
-    //[[[[PRIVATE FUNCTIONS]]]]
-    function _addImport(IHTMLRenderer.FileType memory _import) private {
-        imports.push(_import);
+    /// @notice sets a single import for the given index
+    function _setImport(
+        uint256 index,
+        IHTMLRenderer.FileType memory _import
+    ) private {
+        imports[index] = _import;
     }
 
+    /// @notice store the script and ovverwrite the script pointer
     function _setScript(string memory script) private {
         scriptPointer = SSTORE2.write(bytes(script));
+    }
+
+    /// @notice set the preview base URI
+    function _setPreviewBaseURI(string memory _previewBaseURI) private {
+        previewBaseURI = _previewBaseURI;
     }
 }

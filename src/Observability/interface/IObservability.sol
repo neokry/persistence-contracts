@@ -2,12 +2,14 @@
 pragma solidity ^0.8.13;
 
 interface IObservabilityEvents {
+    /// @notice Emitted when a new clone is deployed
     event CloneDeployed(
         address indexed factory,
         address indexed owner,
         address clone
     );
 
+    /// @notice Emitted when a sale has occured
     event Sale(
         address indexed clone,
         address indexed to,
@@ -15,6 +17,7 @@ interface IObservabilityEvents {
         uint256 amount
     );
 
+    /// @notice Emitted when funds have been withdrawn
     event FundsWithdrawn(
         address indexed clone,
         address indexed withdrawnBy,
@@ -22,8 +25,10 @@ interface IObservabilityEvents {
         uint256 amount
     );
 
+    /// @notice Emitted when a new implementation is registered
     event DeploymentTargetRegistered(address indexed impl);
 
+    /// @notice Emitted when an implementation is unregistered
     event DeploymentTargetUnregistered(address indexed impl);
 
     /// @notice Emitted when an upgrade is registered

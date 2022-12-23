@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {IToken} from "./tokens/interfaces/IToken.sol";
+import {IFixedPriceToken} from "./tokens/interfaces/IFixedPriceToken.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Observability, IObservability} from "./Observability/Observability.sol";
@@ -9,19 +10,24 @@ import {TokenProxy} from "./TokenProxy.sol";
 import {ITokenFactory} from "./interfaces/ITokenFactory.sol";
 
 contract TokenFactory is Ownable2Step, ITokenFactory {
+    /// @notice mapping of all tokens created by this factory
     mapping(address => bool) isToken;
+
+    /// @notice mapping of all deployed implementations
     mapping(address => bool) private deployments;
+
+    /// @notice mapping of all upgrades
+    /// @notice previousImplementation => newImplementation => isValid
     mapping(address => mapping(address => bool)) private upgrades;
 
     /// @notice Observability contract for data processing.
     address public immutable o11y;
 
-    /// @notice Deploys implementation contract.
     constructor() {
         o11y = address(new Observability());
     }
 
-    /// @notice Deploy a new token clone with the sender as the owner.
+    /// @notice Creates a new token contract with the given implementation and data
     function create(
         address tokenImpl,
         bytes calldata data
@@ -33,26 +39,27 @@ contract TokenFactory is Ownable2Step, ITokenFactory {
         IObservability(o11y).emitCloneDeployed(msg.sender, clone);
 
         // Initialize clone.
-        IToken(clone).initialize(msg.sender, data);
+        IFixedPriceToken(clone).initialize(msg.sender, data);
     }
 
+    /// @notice checks if an implementation is valid
     function isValidDeployment(address impl) external view returns (bool) {
         return deployments[impl];
     }
 
+    /// @notice registers a new implementation
     function registerDeployment(address impl) external onlyOwner {
         deployments[impl] = true;
         IObservability(o11y).emitDeploymentTargetRegistererd(impl);
     }
 
+    /// @notice unregisters an implementation
     function unregisterDeployment(address impl) external onlyOwner {
         delete deployments[impl];
         IObservability(o11y).emitDeploymentTargetUnregistered(impl);
     }
 
-    /// @notice If an upgraded implementation has been registered for its original implementation
-    /// @param prevImpl The address of the original implementation
-    /// @param newImpl The address of the upgraded implementation
+    /// @notice checks if an upgrade is valid
     function isValidUpgrade(
         address prevImpl,
         address newImpl
@@ -60,9 +67,7 @@ contract TokenFactory is Ownable2Step, ITokenFactory {
         return upgrades[prevImpl][newImpl];
     }
 
-    /// @notice Registers an implementation as a valid upgrade
-    /// @param prevImpl The address of the original implementation
-    /// @param newImpl The address of the implementation valid to upgrade to
+    /// @notice registers a new upgrade
     function registerUpgrade(
         address prevImpl,
         address newImpl
@@ -72,9 +77,7 @@ contract TokenFactory is Ownable2Step, ITokenFactory {
         IObservability(o11y).emitUpgradeRegistered(prevImpl, newImpl);
     }
 
-    /// @notice Unregisters an implementation
-    /// @param prevImpl The address of the implementation to revert back to
-    /// @param newImpl The address of the implementation to unregister
+    /// @notice unregisters an upgrade
     function unregisterUpgrade(
         address prevImpl,
         address newImpl

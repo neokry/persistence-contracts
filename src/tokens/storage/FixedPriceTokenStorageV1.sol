@@ -4,10 +4,14 @@ import {IFixedPriceToken} from "../interfaces/IFixedPriceToken.sol";
 import {IHTMLRenderer} from "../../renderer/interfaces/IHTMLRenderer.sol";
 
 abstract contract FixedPriceTokenStorageV1 {
+    /// @notice Storage pointer for the generative script
     address scriptPointer;
 
-    /// @notice The html renderer to use
+    /// @notice Address of the HTML renderer
     address htmlRenderer;
+
+    /// @notice Base URI for the preview URI
+    string previewBaseURI;
 
     /// @notice Required imports for the renderer
     IHTMLRenderer.FileType[] public imports;

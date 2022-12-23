@@ -11,6 +11,7 @@ import {IHTMLRenderer} from "../src/renderer/interfaces/IHTMLRenderer.sol";
 import {TokenProxy} from "../src/TokenProxy.sol";
 import {TokenFactory} from "../src/TokenFactory.sol";
 import {ITokenFactory} from "../src/interfaces/ITokenFactory.sol";
+import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 
 contract FixedPriceTokenTest is Test {
     FixedPriceToken token;
@@ -24,6 +25,9 @@ contract FixedPriceTokenTest is Test {
     uint256 startTime = 0;
     uint256 endTime = 0;
     string script = "let x = 1;";
+    string previewBaseURI = "https://example.com/";
+
+    using StringsUpgradeable for uint256;
 
     function setUp() public {
         address o11y = address(new Observability());
@@ -291,6 +295,24 @@ contract FixedPriceTokenTest is Test {
         vm.stopPrank();
     }
 
+    function testGeneratePreviewURI() public {
+        vm.prank(factory);
+        initToken();
+
+        string memory previewURI = token.generatePreviewURI("0");
+        string memory expected = string.concat(
+            previewBaseURI,
+            uint256(uint160(address(token))).toHexString(20),
+            "/",
+            "0"
+        );
+
+        require(
+            keccak256(abi.encodePacked(previewURI)) ==
+                keccak256(abi.encodePacked(expected))
+        );
+    }
+
     function initToken() private {
         IToken.TokenInfo memory tokenInfo = IToken.TokenInfo({
             name: "Test",
@@ -317,7 +339,14 @@ contract FixedPriceTokenTest is Test {
 
         token.initialize(
             owner,
-            abi.encode(script, rendererImpl, tokenInfo, saleInfo, imports)
+            abi.encode(
+                script,
+                previewBaseURI,
+                rendererImpl,
+                tokenInfo,
+                saleInfo,
+                imports
+            )
         );
     }
 }
