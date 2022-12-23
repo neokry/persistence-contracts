@@ -10,9 +10,9 @@
    A flexible html renderer that allows for generative scripts with external dependencies like p5.js and three.js to be rendered fully on chain.
 4. `Observability`
    A single contract for all events to make data processing easier.
-5. 'ETHFSAdapter'
+5. `ETHFSAdapter`
     A file system adapter that allows reading of ETH FS data 
-6. 'MathCastlesAdapter'
+6. `MathCastlesAdapter`
     A file system adapter that allows reading of the math castles library storage data
    
 ### Flexibility and safety
