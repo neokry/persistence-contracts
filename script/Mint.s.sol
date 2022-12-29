@@ -45,7 +45,7 @@ contract Mint is Script {
         );
 
         imports[0] = IHTMLRenderer.FileType({
-            name: "p5-1.5.0.js.gz",
+            name: "p5-1.5.0.min.js.gz",
             fileSystem: ethFSAdapter,
             fileType: 2 //FILE_TYPE_JAVASCRIPT_GZIP
         });

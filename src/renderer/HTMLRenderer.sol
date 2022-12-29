@@ -9,6 +9,7 @@ import {UUPS} from "../lib/proxy/UUPS.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {ITokenFactory} from "../interfaces/ITokenFactory.sol";
 import {VersionedContract} from "../VersionedContract.sol";
+import {DynamicBuffer} from "../lib/utils/DynamicBuffer.sol";
 
 contract HTMLRenderer is
     IHTMLRenderer,
@@ -18,6 +19,21 @@ contract HTMLRenderer is
     VersionedContract
 {
     address immutable factory;
+    string constant DATA_HEADER = "data:text/html;base64,";
+    bytes constant HTML_START =
+        bytes(
+            '<html><head><style type="text/css"> *{padding: 0; margin: 0;}</style>'
+        );
+    bytes constant HTML_END = bytes("</head><body><main></main></body></html>");
+    bytes constant SCRIPT_OPEN_PLAINTEXT = bytes("<script>");
+    bytes constant SCRIPT_OPEN_BASE64 =
+        bytes('<script src="data:text/javascript;base64,');
+    bytes constant SCRIPT_OPEN_GZIP =
+        bytes(
+            '<script type="text/javascript+gzip" src="data:text/javascript;base64,'
+        );
+    bytes constant SCRIPT_CLOSE = bytes("</script>");
+    bytes constant SCRIPT_CLOSE_WITH_END_TAG = bytes('"></script>');
 
     constructor(address _factory) {
         factory = _factory;
@@ -35,63 +51,55 @@ contract HTMLRenderer is
         FileType[] calldata imports,
         string calldata script
     ) public view returns (string memory) {
-        return
-            string.concat(
-                "data:text/html;base64,",
-                Base64.encode(
-                    bytes(
-                        string.concat(
-                            '<html><head><style type="text/css"> *{padding: 0; margin: 0;}</style>',
-                            generateManyFileImports(imports),
-                            script,
-                            "</head><body><main></main></body></html>"
-                        )
-                    )
-                )
-            );
+        // Allocate a buffer with 100 KB capacity
+        bytes memory buffer = DynamicBuffer.allocate(1000000);
+
+        // Generate the HTML / javascript
+        DynamicBuffer.appendUnchecked(buffer, HTML_START);
+        generateManyFileImports(buffer, imports);
+        DynamicBuffer.appendUnchecked(buffer, bytes(script));
+        DynamicBuffer.appendUnchecked(buffer, HTML_END);
+
+        // base64 encode the buffer and prepend the data header
+        return string.concat(DATA_HEADER, Base64.encode(buffer));
     }
 
     /// @notice Returns the HTML for the given imports
     function generateManyFileImports(
+        bytes memory buffer,
         FileType[] calldata _imports
-    ) public view returns (string memory) {
-        string memory imports = "";
-
+    ) public view {
         for (uint256 i = 0; i < _imports.length; i++) {
-            imports = string.concat(imports, generateFileImport(_imports[i]));
+            generateFileImport(buffer, _imports[i]);
         }
-
-        return imports;
     }
 
     /// @notice Returns the HTML for a single import
     function generateFileImport(
+        bytes memory buffer,
         FileType calldata script
     ) public view returns (string memory) {
-        if (script.fileType == FILE_TYPE_JAVASCRIPT_PLAINTEXT) {
-            return
-                string.concat(
-                    "<script>",
-                    IFileSystemAdapter(script.fileSystem).getFile(script.name),
-                    "</script>"
-                );
-        } else if (script.fileType == FILE_TYPE_JAVASCRIPT_BASE64) {
-            return
-                string.concat(
-                    '<script src="data:text/javascript;base64,',
-                    IFileSystemAdapter(script.fileSystem).getFile(script.name),
-                    '"></script>'
-                );
-        } else if (script.fileType == FILE_TYPE_JAVASCRIPT_GZIP) {
-            return
-                string.concat(
-                    '<script type="text/javascript+gzip" src="data:text/javascript;base64,',
-                    IFileSystemAdapter(script.fileSystem).getFile(script.name),
-                    '"></script>'
-                );
-        }
+        // Script open tag
+        if (script.fileType == FILE_TYPE_JAVASCRIPT_PLAINTEXT)
+            DynamicBuffer.appendUnchecked(buffer, SCRIPT_OPEN_PLAINTEXT);
+        else if (script.fileType == FILE_TYPE_JAVASCRIPT_BASE64)
+            DynamicBuffer.appendUnchecked(buffer, SCRIPT_OPEN_BASE64);
+        else if (script.fileType == FILE_TYPE_JAVASCRIPT_GZIP)
+            DynamicBuffer.appendUnchecked(buffer, SCRIPT_OPEN_GZIP);
 
-        revert("Invalid file type");
+        // File content
+        DynamicBuffer.appendUnchecked(
+            buffer,
+            bytes(IFileSystemAdapter(script.fileSystem).getFile(script.name))
+        );
+
+        // Script close tag
+        if (script.fileType == FILE_TYPE_JAVASCRIPT_PLAINTEXT)
+            DynamicBuffer.appendUnchecked(buffer, SCRIPT_CLOSE);
+        else if (
+            script.fileType == FILE_TYPE_JAVASCRIPT_BASE64 ||
+            script.fileType == FILE_TYPE_JAVASCRIPT_GZIP
+        ) DynamicBuffer.appendUnchecked(buffer, SCRIPT_CLOSE_WITH_END_TAG);
     }
 
     /// @notice check if the upgrade is valid

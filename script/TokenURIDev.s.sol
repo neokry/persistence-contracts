@@ -11,7 +11,7 @@ import "forge-std/console2.sol";
 
 contract TokenURI is Script {
     function run() public view {
-        address clone = 0x224A03A9e96451F68A965611809FbC5Ea0E1DC86;
+        address clone = 0xFAc98F94E7e16cC275746952af714c04FB9c527d;
         string memory uri = FixedPriceToken(clone).tokenURI(0);
 
         console2.log("tokenURI:");
