@@ -10,6 +10,8 @@ import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/acces
 import {ITokenFactory} from "../interfaces/ITokenFactory.sol";
 import {VersionedContract} from "../VersionedContract.sol";
 import {DynamicBuffer} from "../lib/utils/DynamicBuffer.sol";
+import {IFileStore} from "ethfs/IFileStore.sol";
+import {File} from "ethfs/File.sol";
 
 contract HTMLRenderer is
     IHTMLRenderer,
@@ -51,13 +53,19 @@ contract HTMLRenderer is
         FileType[] calldata imports,
         string calldata script
     ) public view returns (string memory) {
-        // Allocate a buffer with 100 KB capacity
-        bytes memory buffer = DynamicBuffer.allocate(1000000);
+        (File[] memory files, uint256 totalSize) = _getAllFilesAndTotalSize(
+            imports
+        );
+
+        bytes memory scriptBytes = bytes(script);
+        bytes memory buffer = DynamicBuffer.allocate(
+            totalSize + scriptBytes.length + 100
+        );
 
         // Generate the HTML / javascript
         DynamicBuffer.appendUnchecked(buffer, HTML_START);
-        generateManyFileImports(buffer, imports);
-        DynamicBuffer.appendUnchecked(buffer, bytes(script));
+        generateManyFileImports(buffer, imports, files);
+        DynamicBuffer.appendUnchecked(buffer, scriptBytes);
         DynamicBuffer.appendUnchecked(buffer, HTML_END);
 
         // base64 encode the buffer and prepend the data header
@@ -67,18 +75,20 @@ contract HTMLRenderer is
     /// @notice Returns the HTML for the given imports
     function generateManyFileImports(
         bytes memory buffer,
-        FileType[] calldata _imports
+        FileType[] calldata _imports,
+        File[] memory _files
     ) public view {
         for (uint256 i = 0; i < _imports.length; i++) {
-            generateFileImport(buffer, _imports[i]);
+            generateFileImport(buffer, _imports[i], _files[i]);
         }
     }
 
     /// @notice Returns the HTML for a single import
     function generateFileImport(
         bytes memory buffer,
-        FileType calldata script
-    ) public view returns (string memory) {
+        FileType calldata script,
+        File memory file
+    ) public view {
         // Script open tag
         if (script.fileType == FILE_TYPE_JAVASCRIPT_PLAINTEXT)
             DynamicBuffer.appendUnchecked(buffer, SCRIPT_OPEN_PLAINTEXT);
@@ -88,10 +98,7 @@ contract HTMLRenderer is
             DynamicBuffer.appendUnchecked(buffer, SCRIPT_OPEN_GZIP);
 
         // File content
-        DynamicBuffer.appendUnchecked(
-            buffer,
-            bytes(IFileSystemAdapter(script.fileSystem).getFile(script.name))
-        );
+        DynamicBuffer.appendUnchecked(buffer, bytes(file.read()));
 
         // Script close tag
         if (script.fileType == FILE_TYPE_JAVASCRIPT_PLAINTEXT)
@@ -100,6 +107,23 @@ contract HTMLRenderer is
             script.fileType == FILE_TYPE_JAVASCRIPT_BASE64 ||
             script.fileType == FILE_TYPE_JAVASCRIPT_GZIP
         ) DynamicBuffer.appendUnchecked(buffer, SCRIPT_CLOSE_WITH_END_TAG);
+    }
+
+    function _getAllFilesAndTotalSize(
+        FileType[] calldata imports
+    ) private view returns (File[] memory, uint256) {
+        uint256 len = imports.length;
+        uint256 totalSize = 0;
+        File[] memory files = new File[](len);
+
+        for (uint256 i; i < len; i++) {
+            File memory curr = IFileStore(imports[i].fileSystem).getFile(
+                imports[i].name
+            );
+            files[i] = curr;
+            totalSize += curr.size;
+        }
+        return (files, totalSize);
     }
 
     /// @notice check if the upgrade is valid

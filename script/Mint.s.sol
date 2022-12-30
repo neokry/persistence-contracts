@@ -15,7 +15,7 @@ contract Mint is Script {
 
         address owner = 0xa471C9508Acf13867282f36cfCe5c41D719ab78B;
         address factory = 0x0567758833057088e7f0DB522376343b54Bd17FA;
-        address tokenImpl = 0x8CD66026FF6E348550174D04c497e9bE2A18A8D9;
+        address tokenImpl = 0x7070176995A64A60f03672d9637A5c0ef6dafb44;
         address htmlRenderer = 0x0859739B7c28b29e45017a69501a94E9E7671F18;
         address ethFSAdapter = 0x426bf59BCc66652960Fd43cE461D5c876D66FE6a;
 

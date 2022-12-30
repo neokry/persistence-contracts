@@ -9,13 +9,14 @@ import {MockFileSystem} from "./utils/mocks/MockFileSystem.sol";
 import {IFileSystemAdapter} from "../src/fileSystemAdapters/interfaces/IFileSystemAdapter.sol";
 import {Base64URIDecoder} from "./utils/Base64URIDecoder.sol";
 import {TokenFactory} from "../src/TokenFactory.sol";
+import {IFileStore} from "ethfs/IFileStore.sol";
 
 contract HTMLRendererTest is Test {
     address factory;
     address owner = address(1);
     address notOwner = address(2);
     address upgradeImpl;
-    IFileSystemAdapter mockFS;
+    IFileStore mockFS;
 
     HTMLRenderer renderer;
 
