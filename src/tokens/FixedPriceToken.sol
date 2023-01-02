@@ -203,7 +203,7 @@ contract FixedPriceToken is
         ) revert SaleNotActive();
 
         if (msg.value < (amount * saleInfo.price)) revert InvalidPrice();
-        if (totalSupply() + amount > tokenInfo.totalSupply) revert SoldOut();
+        if (totalSupply() + amount > tokenInfo.maxSupply) revert SoldOut();
 
         IObservability(o11y).emitSale(msg.sender, saleInfo.price, amount);
 

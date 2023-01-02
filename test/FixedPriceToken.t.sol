@@ -319,7 +319,7 @@ contract FixedPriceTokenTest is Test {
             symbol: "TST",
             description: "Test description",
             fundsRecipent: owner,
-            totalSupply: 10
+            maxSupply: 10
         });
 
         IFixedPriceToken.SaleInfo memory saleInfo = IFixedPriceToken.SaleInfo({

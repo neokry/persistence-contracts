@@ -7,12 +7,13 @@ interface IToken {
         string symbol;
         string description;
         address fundsRecipent;
-        uint256 totalSupply;
+        uint256 maxSupply;
     }
 
     error FactoryMustInitilize();
     error SenderNotMinter();
     error FundsSendFailure();
+    error MaxSupplyReached();
 
     /// @notice returns the total supply of tokens
     function totalSupply() external returns (uint256);

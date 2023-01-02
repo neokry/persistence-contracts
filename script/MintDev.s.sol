@@ -30,7 +30,7 @@ contract Mint is Script {
             symbol: "TST",
             description: "Test Description",
             fundsRecipent: owner,
-            totalSupply: 99999
+            maxSupply: 99999
         });
 
         IFixedPriceToken.SaleInfo memory saleInfo = IFixedPriceToken.SaleInfo({

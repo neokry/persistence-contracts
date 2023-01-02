@@ -41,7 +41,7 @@ contract HTMLRenderer is
                 Base64.encode(
                     bytes(
                         string.concat(
-                            '<html><head><style type="text/css"> *{padding: 0; margin: 0;}</style>',
+                            '<html><head><style type="text/css">html{height:100%}body{min-height:100%;margin:0;padding:0}canvas{padding:0;margin:auto;display:block;position:absolute;top:0;bottom:0;left:0;right:0}</style>',
                             generateManyFileImports(imports),
                             script,
                             "</head><body><main></main></body></html>"

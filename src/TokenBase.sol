@@ -88,6 +88,7 @@ abstract contract TokenBase is
 
     /// @notice mint a token for the given address
     function safeMint(address to) public onlyAllowedMinter {
+        if (totalSupply() >= tokenInfo.maxSupply) revert MaxSupplyReached();
         _seedAndMint(to);
     }
 
