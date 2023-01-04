@@ -3,7 +3,8 @@
 ### What are these contracts?
 1. `FixedPriceToken`
    Each generative artwork is a unique contract.
-   This allows for clear ownership of the collection, opt in upgradability and your own contract 
+   This allows for clear ownership of the collection, opt in upgradability and your own contract.
+   The FixedPriceToken implementation alllows you to sell your generative artwork for a fixed price during a fixed amount of time.
 2. `TokenFactory`
    Factory contract allowing you to easily + for a low gas transaction create your own generative art contract.
 3. `HTMLRenderer`
