@@ -6,7 +6,7 @@ import {FixedPriceToken} from "../src/tokens/FixedPriceToken.sol";
 import {IFixedPriceToken} from "../src/tokens/interfaces/IFixedPriceToken.sol";
 import {HTMLRenderer} from "../src/renderer/HTMLRenderer.sol";
 import {IToken} from "../src/tokens/interfaces/IToken.sol";
-import {Observability} from "../src/Observability/Observability.sol";
+import {Observability} from "../src/observability/Observability.sol";
 import {IHTMLRenderer} from "../src/renderer/interfaces/IHTMLRenderer.sol";
 import {TokenProxy} from "../src/TokenProxy.sol";
 import {TokenFactory} from "../src/TokenFactory.sol";

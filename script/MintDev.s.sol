@@ -34,6 +34,7 @@ contract Mint is Script {
         });
 
         IFixedPriceToken.SaleInfo memory saleInfo = IFixedPriceToken.SaleInfo({
+            artistProofCount: 1,
             price: 0,
             startTime: 0,
             endTime: 0

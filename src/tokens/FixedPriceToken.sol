@@ -55,21 +55,42 @@ contract FixedPriceToken is
         if (!(ITokenFactory(factory).isValidDeployment(_rendererImpl)))
             revert ITokenFactory.NotDeployed(_rendererImpl);
 
-        __ERC721_init(_tokenInfo.name, _tokenInfo.symbol);
-        _transferOwnership(owner);
-
-        allowedMinters[owner] = true;
-
         htmlRenderer = address(new HTMLRendererProxy(_rendererImpl, ""));
-        IHTMLRenderer(htmlRenderer).initilize(owner);
+        allowedMinters[owner] = true;
         tokenInfo = _tokenInfo;
         saleInfo = _saleInfo;
+
+        IHTMLRenderer(htmlRenderer).initilize(owner);
+
+        __ERC721_init(_tokenInfo.name, _tokenInfo.symbol);
+        _transferOwnership(owner);
         _addManyImports(_imports);
         _setScript(_script);
         _setPreviewBaseURI(_previewBaseURI);
+        _mintArtistProofs(_saleInfo.artistProofCount);
     }
 
     //[[[[VIEW FUNCTIONS]]]]
+
+    /// @notice a helper function for generating inital contract props
+    function constructInitalProps(
+        string memory _script,
+        string memory _previewBaseURI,
+        address _rendererImpl,
+        TokenInfo memory _tokenInfo,
+        SaleInfo memory _saleInfo,
+        IHTMLRenderer.FileType[] memory _imports
+    ) public pure returns (bytes memory) {
+        return
+            abi.encode(
+                _script,
+                _previewBaseURI,
+                _rendererImpl,
+                _tokenInfo,
+                _saleInfo,
+                _imports
+            );
+    }
 
     /// @notice returns token metadata for a given token id
     function tokenURI(
@@ -242,5 +263,16 @@ contract FixedPriceToken is
     /// @notice set the preview base URI
     function _setPreviewBaseURI(string memory _previewBaseURI) private {
         previewBaseURI = _previewBaseURI;
+    }
+
+    /// @notice mint the artist proofs
+    function _mintArtistProofs(uint16 amount) private {
+        if (proofsMinted) revert ProofsMinted();
+
+        for (uint256 i = 0; i < amount; i++) {
+            _seedAndMint(owner());
+        }
+
+        proofsMinted = true;
     }
 }

@@ -18,4 +18,7 @@ abstract contract FixedPriceTokenStorageV1 {
 
     /// @notice Sales info for token purchases
     IFixedPriceToken.SaleInfo public saleInfo;
+
+    /// @notice Flag to indicate if the artist proofs have been minted
+    bool proofsMinted;
 }

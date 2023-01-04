@@ -6,7 +6,7 @@ import {FixedPriceToken} from "../src/tokens/FixedPriceToken.sol";
 import {IFixedPriceToken} from "../src/tokens/interfaces/IFixedPriceToken.sol";
 import {HTMLRenderer} from "../src/renderer/HTMLRenderer.sol";
 import {IToken} from "../src/tokens/interfaces/IToken.sol";
-import {Observability} from "../src/Observability/Observability.sol";
+import {Observability} from "../src/observability/Observability.sol";
 import {IHTMLRenderer} from "../src/renderer/interfaces/IHTMLRenderer.sol";
 import {TokenProxy} from "../src/TokenProxy.sol";
 import {TokenFactory} from "../src/TokenFactory.sol";
@@ -62,7 +62,12 @@ contract FixedPriceTokenTest is Test {
             uint256 totalSupply
         ) = token.tokenInfo();
 
-        (uint256 saleStart, uint256 saleEnd, uint256 price) = token.saleInfo();
+        (
+            uint16 artistProofCount,
+            uint256 saleStart,
+            uint256 saleEnd,
+            uint256 price
+        ) = token.saleInfo();
 
         require(
             keccak256(abi.encodePacked(name)) ==
@@ -86,6 +91,8 @@ contract FixedPriceTokenTest is Test {
         require(saleEnd == endTime, "Invalid endTime");
 
         require(price == 1 ether, "Invalid price");
+        require(artistProofCount == 1, "Invalid amount of proofs");
+        require(token.totalSupply() == 1, "Proofs not minted");
     }
 
     function testRevert_onlyFactoryCanInitilize() public {
@@ -112,10 +119,10 @@ contract FixedPriceTokenTest is Test {
         vm.prank(factory);
         initToken();
 
-        vm.deal(user, 10 ether);
+        vm.deal(user, 9 ether);
 
         vm.startPrank(user);
-        token.purchase{value: 10 * 1 ether}(10);
+        token.purchase{value: 9 * 1 ether}(9);
         vm.stopPrank();
     }
 
@@ -323,6 +330,7 @@ contract FixedPriceTokenTest is Test {
         });
 
         IFixedPriceToken.SaleInfo memory saleInfo = IFixedPriceToken.SaleInfo({
+            artistProofCount: 1,
             price: 1 ether,
             startTime: startTime,
             endTime: endTime

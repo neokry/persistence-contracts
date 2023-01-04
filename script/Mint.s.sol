@@ -14,10 +14,10 @@ contract Mint is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
         address owner = 0xa471C9508Acf13867282f36cfCe5c41D719ab78B;
-        address factory = 0x0567758833057088e7f0DB522376343b54Bd17FA;
-        address tokenImpl = 0x8CD66026FF6E348550174D04c497e9bE2A18A8D9;
-        address htmlRenderer = 0x0859739B7c28b29e45017a69501a94E9E7671F18;
-        address ethFSAdapter = 0x426bf59BCc66652960Fd43cE461D5c876D66FE6a;
+        address factory = 0xe7826503c2AFF9700934D6cd30D4504f6f57944F;
+        address tokenImpl = 0xFa0c7d9237977d1dC5A0e7151051c35ee324946b;
+        address htmlRenderer = 0xFd335807F0474FDE0Ff91A8B5A236964d3d6AEa2;
+        address ethFSAdapter = 0xce4A2A6d05d940CAd3882F3C52694252304EDb11;
 
         vm.startBroadcast(deployerPrivateKey);
 
@@ -35,6 +35,7 @@ contract Mint is Script {
         });
 
         IFixedPriceToken.SaleInfo memory saleInfo = IFixedPriceToken.SaleInfo({
+            artistProofCount: 1,
             price: 0,
             startTime: 0,
             endTime: 0

@@ -5,14 +5,16 @@ import {IHTMLRenderer} from "../../renderer/interfaces/IHTMLRenderer.sol";
 
 interface IFixedPriceToken {
     struct SaleInfo {
+        uint16 artistProofCount;
         uint64 startTime;
         uint64 endTime;
-        uint128 price;
+        uint112 price;
     }
 
     error SaleNotActive();
     error InvalidPrice();
     error SoldOut();
+    error ProofsMinted();
 
     /// @notice initialize the token
     function initialize(address owner, bytes calldata data) external;

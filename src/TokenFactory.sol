@@ -11,7 +11,7 @@ import {ITokenFactory} from "./interfaces/ITokenFactory.sol";
 
 contract TokenFactory is Ownable2Step, ITokenFactory {
     /// @notice mapping of all tokens created by this factory
-    mapping(address => bool) isToken;
+    mapping(address => bool) public isToken;
 
     /// @notice mapping of all deployed implementations
     mapping(address => bool) private deployments;
