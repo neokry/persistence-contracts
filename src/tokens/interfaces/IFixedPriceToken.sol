@@ -32,6 +32,9 @@ interface IFixedPriceToken {
         string memory tokenId
     ) external view returns (string memory);
 
+    /// @notice generate the html for the token
+    function tokenHTML(uint256 tokenId) external view returns (string memory);
+
     /// @notice generate the full script for the token
     function generateFullScript(
         uint256 tokenId

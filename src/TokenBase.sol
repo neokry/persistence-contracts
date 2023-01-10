@@ -6,7 +6,7 @@ import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/acces
 import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {IToken} from "./tokens/interfaces/IToken.sol";
-import {IObservability} from "./Observability/Observability.sol";
+import {IObservability} from "./observability/Observability.sol";
 import {UUPS} from "./lib/proxy/UUPS.sol";
 import {ITokenFactory} from "./interfaces/ITokenFactory.sol";
 import {VersionedContract} from "./VersionedContract.sol";

@@ -5,7 +5,7 @@ import {IToken} from "./tokens/interfaces/IToken.sol";
 import {IFixedPriceToken} from "./tokens/interfaces/IFixedPriceToken.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {Observability, IObservability} from "./Observability/Observability.sol";
+import {Observability, IObservability} from "./observability/Observability.sol";
 import {TokenProxy} from "./TokenProxy.sol";
 import {ITokenFactory} from "./interfaces/ITokenFactory.sol";
 

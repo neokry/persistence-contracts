@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import {TokenBase} from "../TokenBase.sol";
 import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
-import {IObservability} from "../Observability/Observability.sol";
+import {IObservability} from "../observability/Observability.sol";
 import {IFixedPriceToken} from "./interfaces/IFixedPriceToken.sol";
 import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
 import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
@@ -100,10 +100,7 @@ contract FixedPriceToken is
         string memory fullName = string(
             abi.encodePacked(name(), " ", tokenIdString)
         );
-        string memory animationURL = IHTMLRenderer(htmlRenderer).generateURI(
-            imports,
-            generateFullScript(tokenId)
-        );
+        string memory animationURL = tokenHTML(tokenId);
         string memory image = generatePreviewURI(tokenIdString);
         return
             genericDataURI(
@@ -152,6 +149,15 @@ contract FixedPriceToken is
                 uint256(uint160(address(this))).toHexString(20),
                 "/",
                 tokenId
+            );
+    }
+
+    /// @notice generate the html for the token
+    function tokenHTML(uint256 tokenId) public view returns (string memory) {
+        return
+            IHTMLRenderer(htmlRenderer).generateURI(
+                imports,
+                generateFullScript(tokenId)
             );
     }
 
