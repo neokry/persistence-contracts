@@ -11,7 +11,7 @@ import {ETHFSAdapter} from "../src/fileSystemAdapters/ETHFSAdapter.sol";
 
 contract Deploy is Script {
     function run() public {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_DEV");
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_PRD");
         vm.startBroadcast(deployerPrivateKey);
 
         // Deploy Contracts

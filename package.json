@@ -13,7 +13,7 @@
     "fork:mainnet": "source .env && anvil --fork-url $MAINNET_RPC_URL",
     "uri:staging": "source .env && forge script script/TokenURI.s.sol:TokenURI --rpc-url $GOERLI_RPC_URL -vvvv",
     "deploy:staging": "source .env && forge script script/Deploy.s.sol:Deploy --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv",
-    "deploy:production": "source .env && forge script script/Deploy.s.sol:Deploy --rpc-url $MAINNET_RPC_URL --broadcast --verify -vvvv",
+    "deploy:production": "source .env && forge script script/DeployPrd.s.sol:Deploy --rpc-url $MAINNET_RPC_URL --broadcast --verify -vvvv",
     "deploy:impl": "source .env && forge script script/DeployImpl.s.sol:Deploy --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv",
     "mint:staging": "source .env && forge script script/Mint.s.sol:Mint --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv",
     "deploy:dev": "forge script script/DeployDev.s.sol:Deploy --fork-url http://localhost:8545 --broadcast",

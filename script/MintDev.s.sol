@@ -15,15 +15,17 @@ contract Mint is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_DEV");
 
         address owner = 0xa471C9508Acf13867282f36cfCe5c41D719ab78B;
-        address factory = 0xB7ca895F81F20e05A5eb11B05Cbaab3DAe5e23cd;
-        address tokenImpl = 0x2d13826359803522cCe7a4Cfa2c1b582303DD0B4;
-        address htmlRenderer = 0xd0EC100F1252a53322051a95CF05c32f0C174354;
-        address mcAdapter = 0xCa57C1d3c2c35E667745448Fef8407dd25487ff8;
+        address factory = 0xFCFE742e19790Dd67a627875ef8b45F17DB1DaC6;
+        address tokenImpl = 0xbe18A1B61ceaF59aEB6A9bC81AB4FB87D56Ba167;
+        address htmlRenderer = 0x398E4948e373Db819606A459456176D31C3B1F91;
+        address ethFSAdapter = 0x25C0a2F0A077F537Bd11897F04946794c2f6f1Ef;
 
         vm.startBroadcast(deployerPrivateKey);
 
         string
-            memory script = 'let points=[],inc=0,xOffset=0,squigCount=0,hue=0,pointSpeed=[];const maxPoints=6e3,maxSpeed=5;function setup(){"undefined"!=typeof seed&&(randomSeed(seed),noiseSeed(seed)),createCanvas(window.innerWidth,window.innerHeight),xOffset=random(1,10),squigCount=random(10,40),hue=random(0,255),pointSpeed=[random(-5,5),random(-5,5),]}function draw(){inc+=.005,colorMode(HSB),background(hue+20,100,255);for(let n=0;n<squigCount;n++)generatePoint(n);points.length>6e3&&(points=points.slice(points.length-6e3,points.length)),renderPoints(),corrupt()}function generatePoint(n){let t=10*n;return points.push([noise(inc+t)*width,noise(inc+t*xOffset)*height,5*noise(inc),10*noise(inc*xOffset),[hue,(squigCount-n)*(255/squigCount),n*(255/squigCount),],])}function renderPoints(){for(let n=0;n<points.length;n++){push();let[t,e,i,o,$]=points[n];translate(t,e),noStroke(),fill([...$]),ellipse(0,0,i,o),pop()}}function corrupt(){for(let n=0;n<points.length;n++){let[t,e,i,o,$]=points[n],[s,u]=pointSpeed;points[n]=[noise(inc)*s+t,noise(inc)*u+e,noise(10*inc)+i,noise(10*inc)+o,$,]}}';
+            memory script = 'let planets=[],xoff=0;function setup(){colorMode(HSB),createCanvas(400,400),angleMode(DEGREES);planets=[new Planet(60,200,300,120,1,80),new Planet(80,200,200,200,2,70),new Planet(20,200,180,140,4,300),new Planet(10,200,200,140,3,210),new Planet(26,200,140,240,1,111),new Planet(200,200,200,0,1,220),]}function draw(){background(0),createGrid(),planets.map($=>$.draw())}function createGrid(){let $=3*noise(xoff+=.01);for(let t=0;t<360;t+=$){let i=width/2+width*cos(t),s=height/2+width*sin(t);stroke(100,100,100),line(width/2,height/2,i,s)}}class Planet{constructor($,t,i,s,a,e){this.radius=$,this.x=t,this.y=i,this.scalar=s,this.angle=0,this.speed=a,this.color=e}draw(){let $=this.x-this.radius,t=this.y-this.radius,i=this.x+this.radius,s=this.y+this.radius,a=drawingContext.createRadialGradient($,t,i,s,200,20),e=color(100,100,100),l=color(100,100,100);a.addColorStop(0,e.toString()),a.addColorStop(.5,l.toString()),a.addColorStop(1,e.toString()),drawingContext.fillStyle=a,noStroke();let n=this.x+this.scalar*cos(this.angle),r=this.y+this.scalar*sin(this.angle);ellipse(n,r,this.radius,this.radius),drawingContext.fillStyle="white",this.angle+=this.speed}}';
+        string
+            memory previewBaseURI = "https://math-blocks.vercel.app/api/preview/";
 
         IToken.TokenInfo memory tokenInfo = IToken.TokenInfo({
             name: "Test",
@@ -41,25 +43,24 @@ contract Mint is Script {
         });
 
         IHTMLRenderer.FileType[] memory imports = new IHTMLRenderer.FileType[](
-            1
+            2
         );
 
         imports[0] = IHTMLRenderer.FileType({
-            name: "p5.js 1.4.2",
-            fileSystem: mcAdapter,
-            fileType: 0 //FILE_TYPE_JAVASCRIPT_PLAIN_TEXT
+            name: "p5-v1.5.0.min.js.gz",
+            fileSystem: ethFSAdapter,
+            fileType: 2 //FILE_TYPE_JAVASCRIPT_GZIP
         });
 
-        /*
         imports[1] = IHTMLRenderer.FileType({
             name: "gunzipScripts-0.0.1.js",
             fileSystem: ethFSAdapter,
             fileType: 1 //FILE_TYPE_JAVASCRIPT_BASE64
         });
-        */
 
         bytes memory params = abi.encode(
             script,
+            previewBaseURI,
             htmlRenderer,
             tokenInfo,
             saleInfo,
@@ -72,12 +73,6 @@ contract Mint is Script {
 
         console2.log("clone:");
         console2.log(clone);
-
-        /*
-        string memory uri = FixedPriceToken(clone).tokenURI(0);
-        console2.log("uri:");
-        console2.log(uri);
-        */
 
         vm.stopBroadcast();
     }
