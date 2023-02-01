@@ -126,6 +126,19 @@ contract FixedPriceTokenTest is Test {
         vm.stopPrank();
     }
 
+    function test_purchaseZero() public {
+        vm.prank(factory);
+        initToken();
+
+        uint256 prevTotalSupply = token.totalSupply();
+
+        vm.startPrank(user);
+        token.purchase(0);
+        vm.stopPrank();
+
+        require(token.totalSupply() == prevTotalSupply, "Invalid purchase");
+    }
+
     function testRevert_soldOut() public {
         vm.prank(factory);
         initToken();

@@ -11,3 +11,5 @@ out/
 .env
 .env.staging
 .env.dev
+
+.ds_store
