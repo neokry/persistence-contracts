@@ -27,7 +27,11 @@ contract FixedPriceToken is
 
     //[[[[SETUP FUNCTIONS]]]]
 
-    constructor(address _factory, address _o11y) TokenBase(_factory, _o11y) {}
+    constructor(
+        address _factory,
+        address _o11y,
+        address _feeManager
+    ) TokenBase(_factory, _o11y, _feeManager) {}
 
     /// @notice Initializes the token
     function initialize(

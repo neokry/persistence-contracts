@@ -14,6 +14,7 @@ import {ITokenFactory} from "../src/interfaces/ITokenFactory.sol";
 import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import {SpecificTokenHolderInteractor} from "../src/interactors/SpecificTokenHolderInteractor.sol";
 import {GeneralTokenHolderInteractor} from "../src/interactors/GeneralTokenHolderInteractor.sol";
+import {FeeManager} from "../src/FeeManager.sol";
 
 contract FixedPriceTokenTest is Test {
     FixedPriceToken token;
@@ -24,6 +25,7 @@ contract FixedPriceTokenTest is Test {
     address rendererImpl = address(5);
     address interactor = address(6);
     address fileSystem = address(7);
+    address treasury = address(8);
     address tokenImplUpgrade;
     uint64 startTime = 0;
     uint64 endTime = 0;
@@ -36,10 +38,15 @@ contract FixedPriceTokenTest is Test {
         address o11y = address(new Observability());
         TokenFactory tokenFactory = new TokenFactory();
         factory = address(tokenFactory);
+        address feeManager = address(new FeeManager(1000, treasury));
 
-        address tokenImpl = address(new FixedPriceToken(factory, o11y));
+        address tokenImpl = address(
+            new FixedPriceToken(factory, o11y, feeManager)
+        );
 
-        tokenImplUpgrade = address(new FixedPriceToken(factory, o11y));
+        tokenImplUpgrade = address(
+            new FixedPriceToken(factory, o11y, feeManager)
+        );
         rendererImpl = address(new HTMLRenderer(factory));
         interactor = address(new SpecificTokenHolderInteractor());
 
@@ -190,6 +197,8 @@ contract FixedPriceTokenTest is Test {
 
         vm.deal(user, 1 ether);
 
+        (, uint256 fee) = token.feeForAmount(1 ether);
+
         vm.startPrank(user);
         token.purchase{value: 1 ether}(1);
         vm.stopPrank();
@@ -197,9 +206,10 @@ contract FixedPriceTokenTest is Test {
         uint256 prevBalance = owner.balance;
         vm.startPrank(owner);
         token.withdraw();
+
         vm.stopPrank();
 
-        require(owner.balance - prevBalance == 1 ether);
+        require(owner.balance - prevBalance == 1 ether - fee);
     }
 
     function test_multiWithdraw() public {
@@ -207,6 +217,8 @@ contract FixedPriceTokenTest is Test {
         initToken();
 
         vm.deal(user, 2 ether);
+
+        (, uint256 fee) = token.feeForAmount(2 ether);
 
         vm.startPrank(user);
         token.purchase{value: 2 * 1 ether}(2);
@@ -217,7 +229,7 @@ contract FixedPriceTokenTest is Test {
         token.withdraw();
         vm.stopPrank();
 
-        require(owner.balance - prevBalance == 2 ether);
+        require(owner.balance - prevBalance == 2 ether - fee);
     }
 
     function test_multiWithdrawMultiUser() public {
@@ -225,6 +237,8 @@ contract FixedPriceTokenTest is Test {
         initToken();
 
         vm.deal(user, 2 ether);
+
+        (, uint256 fee) = token.feeForAmount(5 ether);
 
         vm.startPrank(user);
         token.purchase{value: 2 * 1 ether}(2);
@@ -241,7 +255,7 @@ contract FixedPriceTokenTest is Test {
         token.withdraw();
         vm.stopPrank();
 
-        require(owner.balance - prevBalance == 5 ether);
+        require(owner.balance - prevBalance == 5 ether - fee);
     }
 
     function test_ownerSafeMint() public {

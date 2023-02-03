@@ -10,12 +10,14 @@ import {IFixedPriceToken} from "../src/tokens/interfaces/IFixedPriceToken.sol";
 import {FixedPriceToken} from "../src/tokens/FixedPriceToken.sol";
 import {IHTMLRenderer} from "../src/renderer/interfaces/IHTMLRenderer.sol";
 import {HTMLRendererStorageV1} from "../src/renderer/storage/HTMLRendererStorageV1.sol";
+import {FeeManager} from "../src/FeeManager.sol";
 
 contract Deploy is Script {
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
         address factory = 0x0567758833057088e7f0DB522376343b54Bd17FA;
+        address feeManager = address(0);
 
         vm.startBroadcast(deployerPrivateKey);
 
@@ -23,7 +25,11 @@ contract Deploy is Script {
 
         address o11y = address(factoryInstance.o11y());
 
-        FixedPriceToken impl = new FixedPriceToken(address(factory), o11y);
+        FixedPriceToken impl = new FixedPriceToken(
+            address(factory),
+            o11y,
+            feeManager
+        );
         factoryInstance.registerDeployment(address(impl));
 
         console2.log("impl:");

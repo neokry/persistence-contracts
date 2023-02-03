@@ -9,6 +9,8 @@ import {IObservability} from "./observability/Observability.sol";
 import {UUPS} from "./lib/proxy/UUPS.sol";
 import {ITokenFactory} from "./interfaces/ITokenFactory.sol";
 import {VersionedContract} from "./VersionedContract.sol";
+import {IFeeManager} from "./interfaces/IFeeManager.sol";
+import "forge-std/console2.sol";
 
 abstract contract TokenBase is
     IToken,
@@ -23,6 +25,7 @@ abstract contract TokenBase is
 
     address public immutable factory;
     address public immutable o11y;
+    address public immutable feeManager;
     uint256 internal immutable FUNDS_SEND_GAS_LIMIT = 210_000;
 
     uint256 private _tokenIdCounter;
@@ -38,9 +41,10 @@ abstract contract TokenBase is
 
     //[[[[SETUP FUNCTIONS]]]]
 
-    constructor(address _factory, address _o11y) {
+    constructor(address _factory, address _o11y, address _feeManager) {
         factory = _factory;
         o11y = _o11y;
+        feeManager = _feeManager;
     }
 
     //[[[[VIEW FUNCTIONS]]]]
@@ -52,9 +56,32 @@ abstract contract TokenBase is
 
     //[[[[WITHDRAW FUNCTIONS]]]]
 
+    function feeForAmount(
+        uint256 amount
+    ) public returns (address payable, uint256) {
+        (address payable recipient, uint256 bps) = IFeeManager(feeManager)
+            .getWithdrawFeesBPS(address(this));
+        return (recipient, (amount * bps) / 10_000);
+    }
+
     /// @notice withdraws the funds from the contract
     function withdraw() external nonReentrant returns (bool) {
         uint256 amount = address(this).balance;
+
+        (address payable feeRecipent, uint256 protocolFee) = feeForAmount(
+            amount
+        );
+
+        // Pay protocol fee
+        if (protocolFee > 0) {
+            (bool successFee, ) = feeRecipent.call{
+                value: protocolFee,
+                gas: FUNDS_SEND_GAS_LIMIT
+            }("");
+
+            if (!successFee) revert FundsSendFailure();
+            amount -= protocolFee;
+        }
 
         (bool successFunds, ) = tokenInfo.fundsRecipent.call{
             value: amount,

@@ -2,9 +2,9 @@
 pragma solidity ^0.8.10;
 
 import {IFeeManager} from "./interfaces/IFeeManager.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
-contract FeeManager is Ownable, IFeeManager {
+contract FeeManager is Ownable2Step, IFeeManager {
     mapping(address => uint256) public feeOverride;
     uint256 public defaultFeeBPS;
 

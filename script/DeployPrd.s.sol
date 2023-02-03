@@ -8,6 +8,7 @@ import {TokenFactory} from "../src/TokenFactory.sol";
 import {FixedPriceToken} from "../src/tokens/FixedPriceToken.sol";
 import {HTMLRenderer} from "../src/renderer/HTMLRenderer.sol";
 import {ETHFSAdapter} from "../src/fileSystemAdapters/ETHFSAdapter.sol";
+import {FeeManager} from "../src/FeeManager.sol";
 
 contract Deploy is Script {
     function run() public {
@@ -30,7 +31,18 @@ contract Deploy is Script {
         console2.log("o11y:");
         console2.log(address(o11y));
 
-        FixedPriceToken impl = new FixedPriceToken(address(factory), o11y);
+        address feeManager = address(
+            new FeeManager(1000, 0xa471C9508Acf13867282f36cfCe5c41D719ab78B)
+        );
+
+        console2.log("feeManager:");
+        console2.log(feeManager);
+
+        FixedPriceToken impl = new FixedPriceToken(
+            address(factory),
+            o11y,
+            feeManager
+        );
 
         console2.log("impl:");
         console2.log(address(impl));
