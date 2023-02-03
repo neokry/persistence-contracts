@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.16;
 
 import {TokenBase} from "../TokenBase.sol";
 import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
@@ -8,17 +8,20 @@ import {IFixedPriceToken} from "./interfaces/IFixedPriceToken.sol";
 import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
 import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import {FixedPriceTokenStorageV1} from "./storage/FixedPriceTokenStorageV1.sol";
+import {FixedPriceTokenStorageV2} from "./storage/FixedPriceTokenStorageV2.sol";
 import {ITokenFactory} from "../interfaces/ITokenFactory.sol";
 import {HTMLRendererProxy} from "../renderer/HTMLRendererProxy.sol";
 import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
 import {IFileStore} from "ethfs/IFileStore.sol";
 import {SSTORE2} from "@0xsequence/sstore2/contracts/SSTORE2.sol";
 import {Base64} from "base64-sol/base64.sol";
+import {IInteractor} from "../interactors/interfaces/IInteractor.sol";
 
 contract FixedPriceToken is
     IFixedPriceToken,
     TokenBase,
-    FixedPriceTokenStorageV1
+    FixedPriceTokenStorageV1,
+    FixedPriceTokenStorageV2
 {
     using StringsUpgradeable for uint256;
 
@@ -37,6 +40,7 @@ contract FixedPriceToken is
             string memory _script,
             string memory _previewBaseURI,
             address _rendererImpl,
+            address _interactor,
             TokenInfo memory _tokenInfo,
             SaleInfo memory _saleInfo,
             IHTMLRenderer.FileType[] memory _imports
@@ -45,6 +49,7 @@ contract FixedPriceToken is
                 (
                     string,
                     string,
+                    address,
                     address,
                     TokenInfo,
                     SaleInfo,
@@ -62,6 +67,7 @@ contract FixedPriceToken is
 
         IHTMLRenderer(htmlRenderer).initilize(owner);
 
+        _setInteractor(_interactor);
         __ERC721_init(_tokenInfo.name, _tokenInfo.symbol);
         _transferOwnership(owner);
         _addManyImports(_imports);
@@ -77,6 +83,7 @@ contract FixedPriceToken is
         string memory _script,
         string memory _previewBaseURI,
         address _rendererImpl,
+        address _interactor,
         TokenInfo memory _tokenInfo,
         SaleInfo memory _saleInfo,
         IHTMLRenderer.FileType[] memory _imports
@@ -86,6 +93,7 @@ contract FixedPriceToken is
                 _script,
                 _previewBaseURI,
                 _rendererImpl,
+                _interactor,
                 _tokenInfo,
                 _saleInfo,
                 _imports
@@ -167,13 +175,15 @@ contract FixedPriceToken is
     ) public view returns (string memory) {
         return
             string.concat(
-                '<script>var blockHash="',
+                '<script>var persistence={blockHash:"',
                 uint256(tokenIdToPreviousBlockHash[tokenId]).toString(),
-                '";var tokenId="',
+                '",tokenId:"',
                 tokenId.toString(),
-                '";var timestamp="',
+                '",timestamp:"',
                 block.timestamp.toString(),
-                '";',
+                '",rawInteractionState:"',
+                getInteractionState(tokenId),
+                "};",
                 getScript(),
                 "</script>"
             );
@@ -184,11 +194,46 @@ contract FixedPriceToken is
         return string(SSTORE2.read(scriptPointer));
     }
 
+    /// @notice get the interaction state for the token
+    function getInteractionState(
+        uint256 tokenId
+    ) public view returns (string memory) {
+        if (interactionState[tokenId] == address(0)) return "";
+        return string(SSTORE2.read(interactionState[tokenId]));
+    }
+
     //[[[[SCRIPT FUNCTIONS]]]]
 
     /// @notice set the script for the contract
     function setScript(string memory script) public onlyOwner {
         _setScript(script);
+    }
+
+    // [[[ INTERACTION FUNCTIONS ]]]
+
+    /// @notice sets the interactor for the contract
+    function setInteractor(address _interactor) public onlyOwner {
+        _setInteractor(_interactor);
+    }
+
+    /// @notice sets the interaction state for the token if authorized with the interactor
+    function setInteractionState(
+        uint256 tokenId,
+        bytes memory validationData,
+        string memory state
+    ) public {
+        if (interactor == address(0)) revert InteractorNotSet();
+        if (!_exists(tokenId)) revert InvalidTokenId();
+        if (
+            !IInteractor(interactor).isValid(
+                msg.sender,
+                address(this),
+                tokenId,
+                validationData
+            )
+        ) revert InvalidInteraction();
+
+        _setInteractionState(tokenId, state);
     }
 
     //[[[[PREVIEW FUNCTIONS]]]]
@@ -231,12 +276,10 @@ contract FixedPriceToken is
 
         if (msg.value < (amount * saleInfo.price)) revert InvalidPrice();
         if (totalSupply() + amount > tokenInfo.maxSupply) revert SoldOut();
+        if (amount < 1) revert InvalidAmount();
 
+        _seedAndMintMany(msg.sender, amount);
         IObservability(o11y).emitSale(msg.sender, saleInfo.price, amount);
-
-        for (uint256 i = 0; i < amount; i++) {
-            _seedAndMint(msg.sender);
-        }
     }
 
     //[[[[PRIVATE FUNCTIONS]]]]
@@ -248,7 +291,7 @@ contract FixedPriceToken is
     /// @notice adds many imports
     function _addManyImports(IHTMLRenderer.FileType[] memory _imports) private {
         uint256 numImports = _imports.length;
-        for (uint256 i; i < numImports; i++) {
+        for (uint256 i = 0; i < numImports; i++) {
             _addImport(_imports[i]);
         }
     }
@@ -264,6 +307,19 @@ contract FixedPriceToken is
     /// @notice store the script and ovverwrite the script pointer
     function _setScript(string memory script) private {
         scriptPointer = SSTORE2.write(bytes(script));
+    }
+
+    /// @notice set the interactor for this contract
+    function _setInteractor(address _interactor) internal {
+        interactor = _interactor;
+    }
+
+    /// @notice set the interaction state for the token
+    function _setInteractionState(
+        uint256 tokenId,
+        string memory state
+    ) internal {
+        interactionState[tokenId] = SSTORE2.write(bytes(state));
     }
 
     /// @notice set the preview base URI

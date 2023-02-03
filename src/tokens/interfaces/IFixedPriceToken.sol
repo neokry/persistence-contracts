@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.16;
 
 import {IHTMLRenderer} from "../../renderer/interfaces/IHTMLRenderer.sol";
 
@@ -15,6 +15,10 @@ interface IFixedPriceToken {
     error InvalidPrice();
     error SoldOut();
     error ProofsMinted();
+    error InvalidInteraction();
+    error InteractorNotSet();
+    error InvalidTokenId();
+    error InvalidAmount();
 
     /// @notice initialize the token
     function initialize(address owner, bytes calldata data) external;

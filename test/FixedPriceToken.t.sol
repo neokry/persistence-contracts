@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.16;
 
 import "forge-std/Test.sol";
 import {FixedPriceToken} from "../src/tokens/FixedPriceToken.sol";
@@ -12,6 +12,8 @@ import {TokenProxy} from "../src/TokenProxy.sol";
 import {TokenFactory} from "../src/TokenFactory.sol";
 import {ITokenFactory} from "../src/interfaces/ITokenFactory.sol";
 import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
+import {SpecificTokenHolderInteractor} from "../src/interactors/SpecificTokenHolderInteractor.sol";
+import {GeneralTokenHolderInteractor} from "../src/interactors/GeneralTokenHolderInteractor.sol";
 
 contract FixedPriceTokenTest is Test {
     FixedPriceToken token;
@@ -20,7 +22,8 @@ contract FixedPriceTokenTest is Test {
     address user = address(3);
     address otherUser = address(4);
     address rendererImpl = address(5);
-    address fileSystem = address(6);
+    address interactor = address(6);
+    address fileSystem = address(7);
     address tokenImplUpgrade;
     uint64 startTime = 0;
     uint64 endTime = 0;
@@ -38,6 +41,7 @@ contract FixedPriceTokenTest is Test {
 
         tokenImplUpgrade = address(new FixedPriceToken(factory, o11y));
         rendererImpl = address(new HTMLRenderer(factory));
+        interactor = address(new SpecificTokenHolderInteractor());
 
         tokenFactory.registerDeployment(tokenImpl);
         tokenFactory.registerDeployment(rendererImpl);
@@ -130,13 +134,10 @@ contract FixedPriceTokenTest is Test {
         vm.prank(factory);
         initToken();
 
-        uint256 prevTotalSupply = token.totalSupply();
-
         vm.startPrank(user);
+        vm.expectRevert(IFixedPriceToken.InvalidAmount.selector);
         token.purchase(0);
         vm.stopPrank();
-
-        require(token.totalSupply() == prevTotalSupply, "Invalid purchase");
     }
 
     function testRevert_soldOut() public {
@@ -333,6 +334,158 @@ contract FixedPriceTokenTest is Test {
         );
     }
 
+    function testNoInteractor() public {
+        vm.prank(factory);
+        initToken();
+
+        vm.startPrank(owner);
+        token.setInteractor(address(0));
+
+        vm.expectRevert(IFixedPriceToken.InteractorNotSet.selector);
+        token.setInteractionState(0, new bytes(0), "123");
+        vm.stopPrank();
+    }
+
+    function testNoInteraction() public {
+        vm.prank(factory);
+        initToken();
+
+        require(
+            keccak256(abi.encodePacked(token.getInteractionState(0))) ==
+                keccak256("")
+        );
+    }
+
+    function testSpecificInteractor() public {
+        vm.prank(factory);
+        initToken();
+
+        vm.prank(owner);
+        token.safeMint(user);
+
+        string memory initalState = "123";
+
+        vm.startPrank(user);
+        token.setInteractionState(1, new bytes(0), initalState);
+        vm.stopPrank();
+
+        string memory newState = token.getInteractionState(1);
+        require(
+            keccak256(abi.encodePacked(initalState)) ==
+                keccak256(abi.encodePacked(newState)),
+            "State missmatch"
+        );
+    }
+
+    function testRevert_SpecificInteractorNotHolder() public {
+        vm.prank(factory);
+        initToken();
+
+        string memory initalState = "123";
+
+        vm.startPrank(user);
+        vm.expectRevert(IFixedPriceToken.InvalidInteraction.selector);
+        token.setInteractionState(0, new bytes(0), initalState);
+        vm.stopPrank();
+    }
+
+    function testRevert_SpecificInteractorInvalidTokenId() public {
+        vm.prank(factory);
+        initToken();
+
+        string memory initalState = "123";
+
+        vm.startPrank(user);
+        vm.expectRevert(IFixedPriceToken.InvalidTokenId.selector);
+        token.setInteractionState(1, new bytes(0), initalState);
+        vm.stopPrank();
+    }
+
+    function testSetInteractor() public {
+        vm.prank(factory);
+        initToken();
+
+        vm.prank(owner);
+        token.setInteractor(address(10));
+    }
+
+    function testGeneralInteractor() public {
+        vm.prank(factory);
+        initToken();
+
+        vm.prank(owner);
+        token.safeMint(user);
+
+        GeneralTokenHolderInteractor generalInteractor = new GeneralTokenHolderInteractor();
+
+        vm.prank(owner);
+        token.setInteractor(address(generalInteractor));
+
+        string memory initalState = "123";
+        bytes memory data = generalInteractor.getValidationData(0);
+
+        vm.startPrank(owner);
+        token.setInteractionState(1, data, initalState);
+        vm.stopPrank();
+    }
+
+    function testRevert_GeneralInteractorUserNotHolder() public {
+        vm.prank(factory);
+        initToken();
+
+        vm.prank(owner);
+        token.safeMint(user);
+
+        GeneralTokenHolderInteractor generalInteractor = new GeneralTokenHolderInteractor();
+
+        vm.prank(owner);
+        token.setInteractor(address(generalInteractor));
+
+        string memory initalState = "123";
+        bytes memory data = generalInteractor.getValidationData(0);
+
+        vm.startPrank(otherUser);
+        vm.expectRevert(IFixedPriceToken.InvalidInteraction.selector);
+        token.setInteractionState(1, data, initalState);
+        vm.stopPrank();
+    }
+
+    function testRevert_GeneralInteractorInvalidTokenIdForCheck() public {
+        vm.prank(factory);
+        initToken();
+
+        GeneralTokenHolderInteractor generalInteractor = new GeneralTokenHolderInteractor();
+
+        vm.prank(owner);
+        token.setInteractor(address(generalInteractor));
+
+        string memory initalState = "123";
+        bytes memory data = generalInteractor.getValidationData(1);
+
+        vm.startPrank(user);
+        vm.expectRevert("ERC721: invalid token ID");
+        token.setInteractionState(0, data, initalState);
+        vm.stopPrank();
+    }
+
+    function testRevert_GeneralInteractorInvalidTokenIdForInteraction() public {
+        vm.prank(factory);
+        initToken();
+
+        GeneralTokenHolderInteractor generalInteractor = new GeneralTokenHolderInteractor();
+
+        vm.prank(owner);
+        token.setInteractor(address(generalInteractor));
+
+        string memory initalState = "123";
+        bytes memory data = generalInteractor.getValidationData(0);
+
+        vm.startPrank(owner);
+        vm.expectRevert(IFixedPriceToken.InvalidTokenId.selector);
+        token.setInteractionState(1, data, initalState);
+        vm.stopPrank();
+    }
+
     function initToken() private {
         IToken.TokenInfo memory tokenInfo = IToken.TokenInfo({
             name: "Test",
@@ -364,6 +517,7 @@ contract FixedPriceTokenTest is Test {
                 script,
                 previewBaseURI,
                 rendererImpl,
+                interactor,
                 tokenInfo,
                 saleInfo,
                 imports

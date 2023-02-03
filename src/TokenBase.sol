@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.16;
 
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {IToken} from "./tokens/interfaces/IToken.sol";
 import {IObservability} from "./observability/Observability.sol";
@@ -19,16 +18,14 @@ abstract contract TokenBase is
     VersionedContract,
     UUPS
 {
-    using CountersUpgradeable for CountersUpgradeable.Counter;
-
-    CountersUpgradeable.Counter private _tokenIdCounter;
-
     mapping(uint256 => bytes32) public tokenIdToPreviousBlockHash;
     mapping(address => bool) public allowedMinters;
 
     address public immutable factory;
     address public immutable o11y;
     uint256 internal immutable FUNDS_SEND_GAS_LIMIT = 210_000;
+
+    uint256 private _tokenIdCounter;
 
     TokenInfo public tokenInfo;
 
@@ -50,7 +47,7 @@ abstract contract TokenBase is
 
     /// @notice gets the total supply of tokens
     function totalSupply() public view returns (uint256) {
-        return _tokenIdCounter.current();
+        return _tokenIdCounter;
     }
 
     //[[[[WITHDRAW FUNCTIONS]]]]
@@ -96,12 +93,37 @@ abstract contract TokenBase is
 
     /// @notice seeds the token id and mints the token
     function _seedAndMint(address to) internal {
-        uint256 tokenId = _tokenIdCounter.current();
+        uint256 tokenId;
+
+        // Will never realistically overflow
+        unchecked {
+            tokenId = _tokenIdCounter++;
+        }
 
         tokenIdToPreviousBlockHash[tokenId] = blockhash(block.number - 1);
+        _mint(to, tokenId);
+    }
 
-        _tokenIdCounter.increment();
-        _safeMint(to, tokenId);
+    function _seedAndMintMany(address to, uint256 amount) internal {
+        // Will never realistically overflow
+        unchecked {
+            _tokenIdCounter += amount;
+        }
+
+        uint256 tokenId;
+        do {
+            tokenId = _tokenIdCounter + amount;
+            tokenIdToPreviousBlockHash[tokenId] = blockhash(block.number - 1);
+            _mint(to, tokenId);
+            amount -= 1;
+        } while (amount > 0);
+
+        /*
+        for (i; i < _tokenIdCounter; ++i) {
+            tokenIdToPreviousBlockHash[i] = blockhash(block.number - 1);
+            _mint(to, i);
+        }
+        */
     }
 
     /// @notice checks if an upgrade is valid
