@@ -1,0 +1,2 @@
+FixedPriceToken Upgrade implementation: 0xae24ac924744297865b7e1e69f2cbef9b3bfa030
+FeeManager: 0xd976e21d36ecf1843bff8d9a12597db3ae51d89a

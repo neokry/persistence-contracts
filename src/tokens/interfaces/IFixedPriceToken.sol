@@ -2,6 +2,7 @@
 pragma solidity ^0.8.16;
 
 import {IHTMLRenderer} from "../../renderer/interfaces/IHTMLRenderer.sol";
+import {IToken} from "./IToken.sol";
 
 interface IFixedPriceToken {
     struct SaleInfo {
@@ -22,6 +23,16 @@ interface IFixedPriceToken {
 
     /// @notice initialize the token
     function initialize(address owner, bytes calldata data) external;
+
+    function constructInitalProps(
+        string memory _script,
+        string memory _previewBaseURI,
+        address _rendererImpl,
+        address _interactor,
+        IToken.TokenInfo memory _tokenInfo,
+        SaleInfo memory _saleInfo,
+        IHTMLRenderer.FileType[] memory _imports
+    ) external pure returns (bytes memory);
 
     /// @notice contruct a generic data URI from token data
     function genericDataURI(

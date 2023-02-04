@@ -187,7 +187,7 @@ contract FixedPriceToken is
                 block.timestamp.toString(),
                 '",rawInteractionState:"',
                 getInteractionState(tokenId),
-                "};",
+                '"};',
                 getScript(),
                 "</script>"
             );

@@ -32,7 +32,7 @@ contract Deploy is Script {
         console2.log(address(o11y));
 
         address feeManager = address(
-            new FeeManager(1000, 0xa471C9508Acf13867282f36cfCe5c41D719ab78B)
+            new FeeManager(1000, 0x04bfb0034F24E424489F566f32D1f57647469f9E)
         );
 
         console2.log("feeManager:");
