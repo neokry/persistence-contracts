@@ -3,19 +3,12 @@ pragma solidity ^0.8.16;
 
 import {IHTMLRenderer} from "../../renderer/interfaces/IHTMLRenderer.sol";
 import {IToken} from "./IToken.sol";
+import {LibStorage} from "../../libraries/LibStorage.sol";
 
 interface IFixedPriceToken {
-    struct SaleInfo {
-        uint16 artistProofCount;
-        uint64 startTime;
-        uint64 endTime;
-        uint112 price;
-    }
-
     error SaleNotActive();
     error InvalidPrice();
     error SoldOut();
-    error ProofsMinted();
     error InvalidInteraction();
     error InteractorNotSet();
     error InvalidTokenId();
@@ -23,16 +16,6 @@ interface IFixedPriceToken {
 
     /// @notice initialize the token
     function initialize(address owner, bytes calldata data) external;
-
-    function constructInitalProps(
-        string memory _script,
-        string memory _previewBaseURI,
-        address _rendererImpl,
-        address _interactor,
-        IToken.TokenInfo memory _tokenInfo,
-        SaleInfo memory _saleInfo,
-        IHTMLRenderer.FileType[] memory _imports
-    ) external pure returns (bytes memory);
 
     /// @notice contruct a generic data URI from token data
     function genericDataURI(

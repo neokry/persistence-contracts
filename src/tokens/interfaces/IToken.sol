@@ -14,6 +14,7 @@ interface IToken {
     error SenderNotMinter();
     error FundsSendFailure();
     error MaxSupplyReached();
+    error ProofsMinted();
 
     /// @notice returns the total supply of tokens
     function totalSupply() external returns (uint256);

@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 interface IHTMLRenderer {
     struct FileType {
         string name;
-        address fileSystem;
         uint8 fileType;
     }
 
@@ -13,6 +12,6 @@ interface IHTMLRenderer {
     /// @notice Returns the HTML for the given script and imports
     function generateURI(
         FileType[] calldata imports,
-        string calldata script
+        bytes calldata script
     ) external view returns (string memory);
 }
