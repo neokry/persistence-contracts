@@ -20,6 +20,8 @@ contract Mint is Script {
         (result) = abi.decode(vm.parseJson(configFile, key), (address));
     }
 
+    /*
+
     function run() public {
         uint256 chainID = vm.envUint("CHAIN_ID");
         console.log("CHAIN_ID", chainID);
@@ -91,4 +93,5 @@ contract Mint is Script {
 
         vm.stopBroadcast();
     }
+    */
 }

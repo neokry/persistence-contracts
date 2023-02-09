@@ -1,13 +1,27 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
+import {IHTMLRenderer} from "../../renderer/interfaces/IHTMLRenderer.sol";
+
 interface IToken {
     struct TokenInfo {
+        address factory;
+        address o11y;
+        address feeManager;
+        address fundsRecipent;
+        address htmlRenderer;
+        address interactor;
+        bool artistProofsMinted;
+        uint256 maxSupply;
+    }
+
+    struct MetadataInfo {
         string name;
         string symbol;
         string description;
-        address fundsRecipent;
-        uint256 maxSupply;
+        string previewBaseURI;
+        address scriptPointer;
+        IHTMLRenderer.ExternalScript[] imports;
     }
 
     error FactoryMustInitilize();

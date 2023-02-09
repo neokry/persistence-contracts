@@ -13,7 +13,7 @@ library LibToken {
 
     function feeForAmount(
         uint256 amount
-    ) public returns (address payable, uint256) {
+    ) public view returns (address payable, uint256) {
         (address payable recipient, uint256 bps) = IFeeManager(ts().feeManager)
             .getWithdrawFeesBPS(address(this));
         return (recipient, (amount * bps) / 10_000);

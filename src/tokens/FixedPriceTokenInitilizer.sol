@@ -8,6 +8,7 @@ import {HTMLRendererProxy} from "../renderer/HTMLRendererProxy.sol";
 struct InitArgs {
     // Token info
     address fundsRecipent;
+    address htmlRendererImpl;
     uint256 maxSupply;
     uint16 artistProofCount;
     // Metadata
@@ -17,7 +18,7 @@ struct InitArgs {
     string previewBaseURI;
     string script;
     address interactor;
-    IHTMLRenderer.FileType[] imports;
+    IHTMLRenderer.ExternalScript[] imports;
     // Sale info
     uint64 presaleStartTime;
     uint64 presaleEndTime;
@@ -30,15 +31,23 @@ struct InitArgs {
 contract FixedPriceTokenInitilizer is WithStorage {
     function _init(
         address owner,
+        address factory,
+        address o11y,
+        address feeManager,
         bytes memory rawArgs
     ) internal returns (InitArgs memory args) {
         args = abi.decode(rawArgs, (InitArgs));
 
+        ts().factory = factory;
+        ts().o11y = o11y;
+        ts().feeManager = feeManager;
         ts().fundsRecipent = args.fundsRecipent;
         ts().interactor = args.interactor;
         ts().maxSupply = args.maxSupply;
         ts().allowedMinters[owner] = true;
-        ts().htmlRenderer = address(new HTMLRendererProxy(_rendererImpl, ""));
+        ts().htmlRenderer = address(
+            new HTMLRendererProxy(args.htmlRendererImpl, "")
+        );
 
         ms().name = args.name;
         ms().symbol = args.symbol;
@@ -63,10 +72,12 @@ contract FixedPriceTokenInitilizer is WithStorage {
         return abi.encode(args);
     }
 
-    function _addManyImports(IHTMLRenderer.FileType[] memory _imports) private {
+    function _addManyImports(
+        IHTMLRenderer.ExternalScript[] memory _imports
+    ) private {
         uint256 numImports = _imports.length;
         for (uint256 i; i < numImports; ++i) {
-            ms().imports.push(_import);
+            ms().imports.push(_imports[i]);
         }
     }
 }

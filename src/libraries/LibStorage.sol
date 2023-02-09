@@ -10,10 +10,10 @@ struct TokenStorage {
     address fundsRecipent;
     address htmlRenderer;
     address interactor;
+    bool artistProofsMinted;
     uint256 maxSupply;
     mapping(uint256 => bytes32) tokenIdToPreviousBlockHash;
     mapping(address => bool) allowedMinters;
-    bool artistProofsMinted;
 }
 
 struct MetadataStorage {
@@ -22,7 +22,7 @@ struct MetadataStorage {
     string description;
     string previewBaseURI;
     address scriptPointer;
-    IHTMLRenderer.FileType[] imports;
+    IHTMLRenderer.ExternalScript[] imports;
 }
 
 struct FixedPriceSaleInfo {

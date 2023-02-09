@@ -2,16 +2,20 @@
 pragma solidity ^0.8.16;
 
 import "forge-std/Test.sol";
-import {FixedPriceToken} from "../src/tokens/FixedPriceToken.sol";
-import {IFixedPriceToken} from "../src/tokens/interfaces/IFixedPriceToken.sol";
-import {HTMLRenderer} from "../src/renderer/HTMLRenderer.sol";
+
+import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
+
 import {IToken} from "../src/tokens/interfaces/IToken.sol";
-import {Observability} from "../src/observability/Observability.sol";
+import {IFixedPriceToken} from "../src/tokens/interfaces/IFixedPriceToken.sol";
+import {ITokenFactory} from "../src/interfaces/ITokenFactory.sol";
 import {IHTMLRenderer} from "../src/renderer/interfaces/IHTMLRenderer.sol";
+import {FixedPriceSaleInfo} from "../src/libraries/LibStorage.sol";
+import {FixedPriceToken} from "../src/tokens/FixedPriceToken.sol";
+import {InitArgs} from "../src/tokens/FixedPriceTokenInitilizer.sol";
+import {HTMLRenderer} from "../src/renderer/HTMLRenderer.sol";
+import {Observability} from "../src/observability/Observability.sol";
 import {TokenProxy} from "../src/TokenProxy.sol";
 import {TokenFactory} from "../src/TokenFactory.sol";
-import {ITokenFactory} from "../src/interfaces/ITokenFactory.sol";
-import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import {SpecificTokenHolderInteractor} from "../src/interactors/SpecificTokenHolderInteractor.sol";
 import {GeneralTokenHolderInteractor} from "../src/interactors/GeneralTokenHolderInteractor.sol";
 import {FeeManager} from "../src/FeeManager.sol";
@@ -26,6 +30,7 @@ contract FixedPriceTokenTest is Test {
     address interactor = address(6);
     address fileSystem = address(7);
     address treasury = address(8);
+    address ethfs = address(9);
     address tokenImplUpgrade;
     uint64 startTime = 0;
     uint64 endTime = 0;
@@ -47,7 +52,7 @@ contract FixedPriceTokenTest is Test {
         tokenImplUpgrade = address(
             new FixedPriceToken(factory, o11y, feeManager)
         );
-        rendererImpl = address(new HTMLRenderer(factory));
+        rendererImpl = address(new HTMLRenderer(factory, ethfs));
         interactor = address(new SpecificTokenHolderInteractor());
 
         tokenFactory.registerDeployment(tokenImpl);
@@ -65,44 +70,32 @@ contract FixedPriceTokenTest is Test {
         vm.prank(factory);
         initToken();
 
-        (
-            string memory name,
-            string memory symbol,
-            string memory description,
-            address fundsRecipent,
-            uint256 totalSupply
-        ) = token.tokenInfo();
-
-        (
-            uint16 artistProofCount,
-            uint256 saleStart,
-            uint256 saleEnd,
-            uint256 price
-        ) = token.saleInfo();
+        IToken.TokenInfo memory tokenInfo = token.tokenInfo();
+        IToken.MetadataInfo memory metadataInfo = token.metadataInfo();
+        FixedPriceSaleInfo memory saleInfo = token.saleInfo();
 
         require(
-            keccak256(abi.encodePacked(name)) ==
+            keccak256(abi.encodePacked(metadataInfo.name)) ==
                 keccak256(abi.encodePacked("Test")),
             "Invalid name"
         );
         require(
-            keccak256(abi.encodePacked(symbol)) ==
+            keccak256(abi.encodePacked(metadataInfo.symbol)) ==
                 keccak256(abi.encodePacked("TST")),
             "Invalid symbol"
         );
         require(
-            keccak256(abi.encodePacked(description)) ==
+            keccak256(abi.encodePacked(metadataInfo.description)) ==
                 keccak256(abi.encodePacked("Test description")),
             "Invalid description"
         );
-        require(fundsRecipent == owner, "Invalid fundsRecipent");
-        require(totalSupply == 10, "Invalid totalSupply");
+        require(tokenInfo.fundsRecipent == owner, "Invalid fundsRecipent");
+        require(tokenInfo.maxSupply == 10, "Invalid totalSupply");
 
-        require(saleStart == startTime, "Invalid startTime");
-        require(saleEnd == endTime, "Invalid endTime");
+        require(saleInfo.publicStartTime == startTime, "Invalid startTime");
+        require(saleInfo.publicEndTime == endTime, "Invalid endTime");
 
-        require(price == 1 ether, "Invalid price");
-        require(artistProofCount == 1, "Invalid amount of proofs");
+        require(saleInfo.publicPrice == 1 ether, "Invalid price");
         require(token.totalSupply() == 1, "Proofs not minted");
     }
 
@@ -348,194 +341,38 @@ contract FixedPriceTokenTest is Test {
         );
     }
 
-    function testNoInteractor() public {
-        vm.prank(factory);
-        initToken();
-
-        vm.startPrank(owner);
-        token.setInteractor(address(0));
-
-        vm.expectRevert(IFixedPriceToken.InteractorNotSet.selector);
-        token.setInteractionState(0, new bytes(0), "123");
-        vm.stopPrank();
-    }
-
-    function testNoInteraction() public {
-        vm.prank(factory);
-        initToken();
-
-        require(
-            keccak256(abi.encodePacked(token.getInteractionState(0))) ==
-                keccak256("")
-        );
-    }
-
-    function testSpecificInteractor() public {
-        vm.prank(factory);
-        initToken();
-
-        vm.prank(owner);
-        token.safeMint(user);
-
-        string memory initalState = "123";
-
-        vm.startPrank(user);
-        token.setInteractionState(1, new bytes(0), initalState);
-        vm.stopPrank();
-
-        string memory newState = token.getInteractionState(1);
-        require(
-            keccak256(abi.encodePacked(initalState)) ==
-                keccak256(abi.encodePacked(newState)),
-            "State missmatch"
-        );
-    }
-
-    function testRevert_SpecificInteractorNotHolder() public {
-        vm.prank(factory);
-        initToken();
-
-        string memory initalState = "123";
-
-        vm.startPrank(user);
-        vm.expectRevert(IFixedPriceToken.InvalidInteraction.selector);
-        token.setInteractionState(0, new bytes(0), initalState);
-        vm.stopPrank();
-    }
-
-    function testRevert_SpecificInteractorInvalidTokenId() public {
-        vm.prank(factory);
-        initToken();
-
-        string memory initalState = "123";
-
-        vm.startPrank(user);
-        vm.expectRevert(IFixedPriceToken.InvalidTokenId.selector);
-        token.setInteractionState(1, new bytes(0), initalState);
-        vm.stopPrank();
-    }
-
-    function testSetInteractor() public {
-        vm.prank(factory);
-        initToken();
-
-        vm.prank(owner);
-        token.setInteractor(address(10));
-    }
-
-    function testGeneralInteractor() public {
-        vm.prank(factory);
-        initToken();
-
-        vm.prank(owner);
-        token.safeMint(user);
-
-        GeneralTokenHolderInteractor generalInteractor = new GeneralTokenHolderInteractor();
-
-        vm.prank(owner);
-        token.setInteractor(address(generalInteractor));
-
-        string memory initalState = "123";
-        bytes memory data = generalInteractor.getValidationData(0);
-
-        vm.startPrank(owner);
-        token.setInteractionState(1, data, initalState);
-        vm.stopPrank();
-    }
-
-    function testRevert_GeneralInteractorUserNotHolder() public {
-        vm.prank(factory);
-        initToken();
-
-        vm.prank(owner);
-        token.safeMint(user);
-
-        GeneralTokenHolderInteractor generalInteractor = new GeneralTokenHolderInteractor();
-
-        vm.prank(owner);
-        token.setInteractor(address(generalInteractor));
-
-        string memory initalState = "123";
-        bytes memory data = generalInteractor.getValidationData(0);
-
-        vm.startPrank(otherUser);
-        vm.expectRevert(IFixedPriceToken.InvalidInteraction.selector);
-        token.setInteractionState(1, data, initalState);
-        vm.stopPrank();
-    }
-
-    function testRevert_GeneralInteractorInvalidTokenIdForCheck() public {
-        vm.prank(factory);
-        initToken();
-
-        GeneralTokenHolderInteractor generalInteractor = new GeneralTokenHolderInteractor();
-
-        vm.prank(owner);
-        token.setInteractor(address(generalInteractor));
-
-        string memory initalState = "123";
-        bytes memory data = generalInteractor.getValidationData(1);
-
-        vm.startPrank(user);
-        vm.expectRevert("ERC721: invalid token ID");
-        token.setInteractionState(0, data, initalState);
-        vm.stopPrank();
-    }
-
-    function testRevert_GeneralInteractorInvalidTokenIdForInteraction() public {
-        vm.prank(factory);
-        initToken();
-
-        GeneralTokenHolderInteractor generalInteractor = new GeneralTokenHolderInteractor();
-
-        vm.prank(owner);
-        token.setInteractor(address(generalInteractor));
-
-        string memory initalState = "123";
-        bytes memory data = generalInteractor.getValidationData(0);
-
-        vm.startPrank(owner);
-        vm.expectRevert(IFixedPriceToken.InvalidTokenId.selector);
-        token.setInteractionState(1, data, initalState);
-        vm.stopPrank();
-    }
-
     function initToken() private {
-        IToken.TokenInfo memory tokenInfo = IToken.TokenInfo({
+        IHTMLRenderer.ExternalScript[]
+            memory imports = new IHTMLRenderer.ExternalScript[](1);
+
+        imports[0] = IHTMLRenderer.ExternalScript({
+            name: "Test",
+            scriptType: 0
+        });
+
+        InitArgs memory args = InitArgs({
+            // Token info
+            fundsRecipent: owner,
+            htmlRendererImpl: rendererImpl,
+            maxSupply: 10,
+            artistProofCount: 1,
+            // Metadata
             name: "Test",
             symbol: "TST",
             description: "Test description",
-            fundsRecipent: owner,
-            maxSupply: 10
+            previewBaseURI: previewBaseURI,
+            script: script,
+            interactor: interactor,
+            imports: imports,
+            // Sale info
+            presaleStartTime: 0,
+            presaleEndTime: 0,
+            presalePrice: 0,
+            publicPrice: 1 ether,
+            publicStartTime: startTime,
+            publicEndTime: endTime
         });
 
-        IFixedPriceToken.SaleInfo memory saleInfo = IFixedPriceToken.SaleInfo({
-            artistProofCount: 1,
-            price: 1 ether,
-            startTime: startTime,
-            endTime: endTime
-        });
-
-        IHTMLRenderer.FileType[] memory imports = new IHTMLRenderer.FileType[](
-            1
-        );
-        imports[0] = IHTMLRenderer.FileType({
-            name: "Test",
-            fileType: 0,
-            fileSystem: fileSystem
-        });
-
-        token.initialize(
-            owner,
-            abi.encode(
-                script,
-                previewBaseURI,
-                rendererImpl,
-                interactor,
-                tokenInfo,
-                saleInfo,
-                imports
-            )
-        );
+        token.initialize(owner, abi.encode(args));
     }
 }

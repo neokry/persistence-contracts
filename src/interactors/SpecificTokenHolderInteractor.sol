@@ -22,8 +22,4 @@ contract SpecificTokenHolderInteractor is IInteractor {
     ) public view override returns (bool) {
         return user == IERC721Upgradeable(tokenContract).ownerOf(tokenId);
     }
-
-    function interact(bytes memory data) public {
-        token
-    }
 }

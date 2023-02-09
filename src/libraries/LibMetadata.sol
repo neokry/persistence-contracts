@@ -3,13 +3,13 @@ pragma solidity ^0.8.16;
 
 import {Base64} from "base64-sol/base64.sol";
 import {SSTORE2} from "@0xsequence/sstore2/contracts/SSTORE2.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 
 import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
 import {LibStorage, MetadataStorage, TokenStorage} from "./LibStorage.sol";
 
 library LibMetadata {
-    using Strings for uint256;
+    using StringsUpgradeable for uint256;
 
     function ms() internal pure returns (MetadataStorage storage) {
         return LibStorage.metadataStorage();

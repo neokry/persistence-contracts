@@ -2,7 +2,6 @@
 pragma solidity ^0.8.13;
 
 import {Base64} from "base64-sol/base64.sol";
-import {IFileSystemAdapter} from "../fileSystemAdapters/interfaces/IFileSystemAdapter.sol";
 import {IHTMLRenderer} from "./interfaces/IHTMLRenderer.sol";
 import {HTMLRendererStorageV1} from "./storage/HTMLRendererStorageV1.sol";
 import {UUPS} from "../vendor/proxy/UUPS.sol";
@@ -39,9 +38,9 @@ contract HTMLRenderer is
     bytes constant SCRIPT_CLOSE = bytes("</script>");
     bytes constant SCRIPT_CLOSE_WITH_END_TAG = bytes('"></script>');
 
-    constructor(address _factory, IFileStore _ethfs) {
+    constructor(address _factory, address _ethfs) {
         factory = _factory;
-        ethfs = _ethfs;
+        ethfs = IFileStore(_ethfs);
     }
 
     /// @notice set the owner of the contract
@@ -53,7 +52,7 @@ contract HTMLRenderer is
      * @notice Construct an html URI from the given script and imports.
      */
     function generateURI(
-        FileType[] calldata imports,
+        ExternalScript[] calldata imports,
         bytes calldata script
     ) public view returns (string memory) {
         (File[] memory files, uint256 totalSize) = _getAllFilesAndTotalSize(
@@ -77,7 +76,7 @@ contract HTMLRenderer is
     /// @notice Returns the HTML for the given imports
     function generateManyFileImports(
         bytes memory buffer,
-        FileType[] calldata _imports,
+        ExternalScript[] calldata _imports,
         File[] memory _files
     ) public view {
         for (uint256 i = 0; i < _imports.length; ++i) {
@@ -88,31 +87,31 @@ contract HTMLRenderer is
     /// @notice Returns the HTML for a single import
     function generateFileImport(
         bytes memory buffer,
-        FileType calldata script,
+        ExternalScript calldata script,
         File memory file
     ) public view {
         // Script open tag
-        if (script.fileType == FILE_TYPE_JAVASCRIPT_PLAINTEXT)
+        if (script.scriptType == FILE_TYPE_JAVASCRIPT_PLAINTEXT)
             DynamicBuffer.appendUnchecked(buffer, SCRIPT_OPEN_PLAINTEXT);
-        else if (script.fileType == FILE_TYPE_JAVASCRIPT_BASE64)
+        else if (script.scriptType == FILE_TYPE_JAVASCRIPT_BASE64)
             DynamicBuffer.appendUnchecked(buffer, SCRIPT_OPEN_BASE64);
-        else if (script.fileType == FILE_TYPE_JAVASCRIPT_GZIP)
+        else if (script.scriptType == FILE_TYPE_JAVASCRIPT_GZIP)
             DynamicBuffer.appendUnchecked(buffer, SCRIPT_OPEN_GZIP);
 
         // File content
         DynamicBuffer.appendUnchecked(buffer, bytes(file.read()));
 
         // Script close tag
-        if (script.fileType == FILE_TYPE_JAVASCRIPT_PLAINTEXT)
+        if (script.scriptType == FILE_TYPE_JAVASCRIPT_PLAINTEXT)
             DynamicBuffer.appendUnchecked(buffer, SCRIPT_CLOSE);
         else if (
-            script.fileType == FILE_TYPE_JAVASCRIPT_BASE64 ||
-            script.fileType == FILE_TYPE_JAVASCRIPT_GZIP
+            script.scriptType == FILE_TYPE_JAVASCRIPT_BASE64 ||
+            script.scriptType == FILE_TYPE_JAVASCRIPT_GZIP
         ) DynamicBuffer.appendUnchecked(buffer, SCRIPT_CLOSE_WITH_END_TAG);
     }
 
     function _getAllFilesAndTotalSize(
-        FileType[] calldata imports
+        ExternalScript[] calldata imports
     ) private view returns (File[] memory, uint256) {
         uint256 len = imports.length;
         uint256 totalSize = 0;
