@@ -28,6 +28,7 @@ contract Deploy is Script {
 
         address factory = _getKey("Factory");
         address o11y = _getKey("Observability");
+        address ethfs = address(0);
 
         console2.log("~~~~~~~~~~ Factory ADDRESS ~~~~~~~~~~~");
         console2.logAddress(factory);
@@ -42,7 +43,7 @@ contract Deploy is Script {
         );
 
         address tokenImpl = address(
-            new FixedPriceToken(factory, o11y, feeManager)
+            new FixedPriceToken(factory, o11y, feeManager, ethfs)
         );
 
         vm.stopBroadcast();

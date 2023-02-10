@@ -8,17 +8,14 @@ import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Stri
 import {IToken} from "../src/tokens/interfaces/IToken.sol";
 import {IFixedPriceToken} from "../src/tokens/interfaces/IFixedPriceToken.sol";
 import {ITokenFactory} from "../src/interfaces/ITokenFactory.sol";
-import {IHTMLRenderer} from "../src/renderer/interfaces/IHTMLRenderer.sol";
 import {FixedPriceSaleInfo} from "../src/libraries/LibStorage.sol";
 import {FixedPriceToken} from "../src/tokens/FixedPriceToken.sol";
 import {InitArgs} from "../src/tokens/FixedPriceTokenInitilizer.sol";
-import {HTMLRenderer} from "../src/renderer/HTMLRenderer.sol";
 import {Observability} from "../src/observability/Observability.sol";
 import {TokenProxy} from "../src/TokenProxy.sol";
 import {TokenFactory} from "../src/TokenFactory.sol";
-import {SpecificTokenHolderInteractor} from "../src/interactors/SpecificTokenHolderInteractor.sol";
-import {GeneralTokenHolderInteractor} from "../src/interactors/GeneralTokenHolderInteractor.sol";
 import {FeeManager} from "../src/FeeManager.sol";
+import {LibHTMLRenderer} from "../src/libraries/LibHTMLRenderer.sol";
 
 contract FixedPriceTokenTest is Test {
     FixedPriceToken token;
@@ -26,9 +23,6 @@ contract FixedPriceTokenTest is Test {
     address owner = address(2);
     address user = address(3);
     address otherUser = address(4);
-    address rendererImpl = address(5);
-    address interactor = address(6);
-    address fileSystem = address(7);
     address treasury = address(8);
     address ethfs = address(9);
     address tokenImplUpgrade;
@@ -46,17 +40,14 @@ contract FixedPriceTokenTest is Test {
         address feeManager = address(new FeeManager(1000, treasury));
 
         address tokenImpl = address(
-            new FixedPriceToken(factory, o11y, feeManager)
+            new FixedPriceToken(factory, o11y, feeManager, ethfs)
         );
 
         tokenImplUpgrade = address(
-            new FixedPriceToken(factory, o11y, feeManager)
+            new FixedPriceToken(factory, o11y, feeManager, ethfs)
         );
-        rendererImpl = address(new HTMLRenderer(factory, ethfs));
-        interactor = address(new SpecificTokenHolderInteractor());
 
         tokenFactory.registerDeployment(tokenImpl);
-        tokenFactory.registerDeployment(rendererImpl);
 
         tokenFactory.registerUpgrade(tokenImpl, tokenImplUpgrade);
 
@@ -342,18 +333,20 @@ contract FixedPriceTokenTest is Test {
     }
 
     function initToken() private {
-        IHTMLRenderer.ExternalScript[]
-            memory imports = new IHTMLRenderer.ExternalScript[](1);
+        LibHTMLRenderer.ScriptRequest[]
+            memory imports = new LibHTMLRenderer.ScriptRequest[](1);
 
-        imports[0] = IHTMLRenderer.ExternalScript({
+        imports[0] = LibHTMLRenderer.ScriptRequest({
             name: "Test",
-            scriptType: 0
+            scriptType: LibHTMLRenderer.ScriptType.JAVASCRIPT_BASE64,
+            data: new bytes(0),
+            urlEncodedPrefix: new bytes(0),
+            urlEncodedSuffix: new bytes(0)
         });
 
         InitArgs memory args = InitArgs({
             // Token info
             fundsRecipent: owner,
-            htmlRendererImpl: rendererImpl,
             maxSupply: 10,
             artistProofCount: 1,
             // Metadata
@@ -362,7 +355,7 @@ contract FixedPriceTokenTest is Test {
             description: "Test description",
             previewBaseURI: previewBaseURI,
             script: script,
-            interactor: interactor,
+            interactor: address(0),
             imports: imports,
             // Sale info
             presaleStartTime: 0,

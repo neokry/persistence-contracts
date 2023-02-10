@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import {IHTMLRenderer} from "../../renderer/interfaces/IHTMLRenderer.sol";
 import {IToken} from "./IToken.sol";
 import {LibStorage} from "../../libraries/LibStorage.sol";
 

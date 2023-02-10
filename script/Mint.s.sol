@@ -8,8 +8,6 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {TokenFactory} from "../src/TokenFactory.sol";
 import {IToken} from "../src/tokens/interfaces/IToken.sol";
 import {IFixedPriceToken} from "../src/tokens/interfaces/IFixedPriceToken.sol";
-import {IHTMLRenderer} from "../src/renderer/interfaces/IHTMLRenderer.sol";
-import {HTMLRendererStorageV1} from "../src/renderer/storage/HTMLRendererStorageV1.sol";
 
 contract Mint is Script {
     using Strings for uint256;

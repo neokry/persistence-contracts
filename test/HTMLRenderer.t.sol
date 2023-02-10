@@ -2,9 +2,6 @@
 pragma solidity ^0.8.16;
 
 import "forge-std/Test.sol";
-import {HTMLRenderer} from "../src/renderer/HTMLRenderer.sol";
-import {HTMLRendererProxy} from "../src/renderer/HTMLRendererProxy.sol";
-import {IHTMLRenderer} from "../src/renderer/interfaces/IHTMLRenderer.sol";
 import {Base64URIDecoder} from "./utils/Base64URIDecoder.sol";
 import {TokenFactory} from "../src/TokenFactory.sol";
 
@@ -13,8 +10,6 @@ contract HTMLRendererTest is Test {
     address owner = address(1);
     address notOwner = address(2);
     address upgradeImpl;
-
-    HTMLRenderer renderer;
 
     /*
 

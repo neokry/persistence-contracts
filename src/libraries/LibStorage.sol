@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
 
-import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
+import {LibHTMLRenderer} from "./LibHTMLRenderer.sol";
 
 struct TokenStorage {
     address factory;
     address o11y;
     address feeManager;
+    address ethFS;
     address fundsRecipent;
-    address htmlRenderer;
     address interactor;
     bool artistProofsMinted;
     uint256 maxSupply;
-    mapping(uint256 => bytes32) tokenIdToPreviousBlockHash;
+    mapping(uint256 => uint256) tokenIdToBlockDifficulty;
     mapping(address => bool) allowedMinters;
 }
 
@@ -22,7 +22,8 @@ struct MetadataStorage {
     string description;
     string previewBaseURI;
     address scriptPointer;
-    IHTMLRenderer.ExternalScript[] imports;
+    uint256 bufferSize;
+    LibHTMLRenderer.ScriptRequest[] imports;
 }
 
 struct FixedPriceSaleInfo {

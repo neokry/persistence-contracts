@@ -5,7 +5,7 @@ import {Base64} from "base64-sol/base64.sol";
 import {SSTORE2} from "@0xsequence/sstore2/contracts/SSTORE2.sol";
 import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 
-import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
+import {LibHTMLRenderer} from "./LibHTMLRenderer.sol";
 import {LibStorage, MetadataStorage, TokenStorage} from "./LibStorage.sol";
 
 library LibMetadata {
@@ -27,27 +27,36 @@ library LibMetadata {
         string memory fullName = string(
             abi.encodePacked(ms().name, " ", tokenId)
         );
-        bytes32 blockHash = ts().tokenIdToPreviousBlockHash[tokenId];
+        uint256 blockDifficulty = ts().tokenIdToBlockDifficulty[tokenId];
+
+        LibHTMLRenderer.ScriptRequest[] memory imports = ms().imports;
+
+        imports[imports.length] = LibHTMLRenderer.ScriptRequest({
+            scriptType: LibHTMLRenderer.ScriptType.JAVASCRIPT_BASE64,
+            name: "",
+            data: generateFullScript(tokenIdString, blockDifficulty),
+            urlEncodedPrefix: new bytes(0),
+            urlEncodedSuffix: new bytes(0)
+        });
 
         return
             string.concat(
                 "data:application/json;base64,",
                 Base64.encode(
-                    bytes(
-                        string.concat(
-                            '{"name":"',
-                            fullName,
-                            '", "description":"',
-                            ms().description,
-                            '", "animation_url": "',
-                            IHTMLRenderer(ts().htmlRenderer).generateURI(
-                                ms().imports,
-                                generateFullScript(tokenIdString, blockHash)
-                            ),
-                            '", "image": "',
-                            generatePreviewURI(tokenIdString),
-                            '"}'
-                        )
+                    abi.encodePacked(
+                        "data:application/json,",
+                        '{"name":"',
+                        fullName,
+                        '", "description":"',
+                        ms().description,
+                        '", "animation_url": "',
+                        LibHTMLRenderer.generateURLSafeHTML(
+                            imports,
+                            ms().bufferSize
+                        ),
+                        '", "image": "',
+                        generatePreviewURI(tokenIdString),
+                        '"}'
                     )
                 )
             );
@@ -69,13 +78,13 @@ library LibMetadata {
     /// @notice generate the full script for the token
     function generateFullScript(
         string memory tokenId,
-        bytes32 blockHash
+        uint256 blockDifficulty
     ) public view returns (bytes memory) {
         return
             bytes(
                 string.concat(
-                    '<script>var persistence={blockHash:"',
-                    uint256(blockHash).toString(),
+                    '<script>var persistence={blockDifficulty:"',
+                    blockDifficulty.toString(),
                     '",tokenId:"',
                     tokenId,
                     '",timestamp:"',

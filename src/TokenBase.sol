@@ -23,11 +23,11 @@ import {IObservability} from "./observability/Observability.sol";
 import {ITokenFactory} from "./interfaces/ITokenFactory.sol";
 
 import {IFeeManager} from "./interfaces/IFeeManager.sol";
-import {IHTMLRenderer} from "./renderer/interfaces/IHTMLRenderer.sol";
 import {WithStorage, TokenStorage, MetadataStorage} from "./libraries/LibStorage.sol";
 import {UUPS} from "./vendor/proxy/UUPS.sol";
 import {VersionedContract} from "./VersionedContract.sol";
 import {LibToken} from "./libraries/LibToken.sol";
+import {LibHTMLRenderer} from "./libraries/LibHTMLRenderer.sol";
 import {LibMetadata} from "./libraries/LibMetadata.sol";
 
 abstract contract TokenBase is
@@ -44,6 +44,7 @@ abstract contract TokenBase is
     address public immutable factory;
     address public immutable o11y;
     address public immutable feeManager;
+    address public immutable ethFS;
 
     CountersUpgradeable.Counter private _tokenIdCounter;
 
@@ -57,10 +58,16 @@ abstract contract TokenBase is
 
     //[[[[SETUP FUNCTIONS]]]]
 
-    constructor(address _factory, address _o11y, address _feeManager) {
+    constructor(
+        address _factory,
+        address _o11y,
+        address _feeManager,
+        address _ethFS
+    ) {
         factory = _factory;
         o11y = _o11y;
         feeManager = _feeManager;
+        ethFS = _ethFS;
     }
 
     //[[[[VIEW FUNCTIONS]]]]
@@ -94,7 +101,6 @@ abstract contract TokenBase is
         info.o11y = ts().o11y;
         info.feeManager = ts().feeManager;
         info.fundsRecipent = ts().fundsRecipent;
-        info.htmlRenderer = ts().htmlRenderer;
         info.interactor = ts().interactor;
         info.artistProofsMinted = ts().artistProofsMinted;
         info.maxSupply = ts().maxSupply;
@@ -126,27 +132,25 @@ abstract contract TokenBase is
         ms().previewBaseURI = uri;
     }
 
-    /// @notice set the html renderer for the token
-    function setHTMLRenderer(address _htmlRenderer) external onlyOwner {
-        ts().htmlRenderer = _htmlRenderer;
-    }
-
     //[[[IMPORT FUNCTIONS]]]
 
     /// @notice add multiple imports to the token
     function addManyImports(
-        IHTMLRenderer.ExternalScript[] calldata _imports
+        LibHTMLRenderer.ScriptRequest[] calldata _imports
     ) external onlyOwner {
         uint256 numImports = _imports.length;
-        for (uint256 i = 0; i < numImports; ++i) {
-            ms().imports.push(_imports[i]);
+        uint256 i = 0;
+        unchecked {
+            do {
+                ms().imports.push(_imports[i]);
+            } while (++i < numImports);
         }
     }
 
     /// @notice set a single import to the token for a given index
     function setImport(
         uint256 index,
-        IHTMLRenderer.ExternalScript calldata _import
+        LibHTMLRenderer.ScriptRequest calldata _import
     ) external onlyOwner {
         ms().imports[index] = _import;
     }
@@ -180,18 +184,18 @@ abstract contract TokenBase is
 
     /// @notice seeds the token id and mints the token
     function _seedAndMint(address to) internal {
-        ts().tokenIdToPreviousBlockHash[_tokenIdCounter.current()] = blockhash(
-            block.number - 1
-        );
+        ts().tokenIdToBlockDifficulty[_tokenIdCounter.current()] = block
+            .difficulty;
 
-        // Will never realistically overflow
         _mint(to, _tokenIdCounter.current());
         _tokenIdCounter.increment();
     }
 
     function _seedAndMintMany(address to, uint256 amount) internal {
-        for (uint i = 0; i < amount; ++i) {
-            _seedAndMint(to);
+        unchecked {
+            do {
+                _seedAndMint(to);
+            } while (--amount > 0);
         }
     }
 

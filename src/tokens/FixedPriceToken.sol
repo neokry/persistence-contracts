@@ -25,8 +25,9 @@ contract FixedPriceToken is
     constructor(
         address _factory,
         address _o11y,
-        address _feeManager
-    ) TokenBase(_factory, _o11y, _feeManager) {}
+        address _feeManager,
+        address _ethFS
+    ) TokenBase(_factory, _o11y, _feeManager, _ethFS) {}
 
     function initialize(
         address owner,
@@ -34,7 +35,14 @@ contract FixedPriceToken is
     ) external initializer {
         if (msg.sender != factory) revert FactoryMustInitilize();
 
-        InitArgs memory args = _init(owner, factory, o11y, feeManager, data);
+        InitArgs memory args = _init(
+            owner,
+            factory,
+            o11y,
+            feeManager,
+            ethFS,
+            data
+        );
 
         __ERC721_init(args.name, args.symbol);
         _transferOwnership(owner);

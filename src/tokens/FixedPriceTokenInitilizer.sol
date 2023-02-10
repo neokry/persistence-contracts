@@ -2,13 +2,11 @@
 pragma solidity ^0.8.16;
 
 import {WithStorage} from "../libraries/LibStorage.sol";
-import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
-import {HTMLRendererProxy} from "../renderer/HTMLRendererProxy.sol";
+import {LibHTMLRenderer} from "../libraries/LibHTMLRenderer.sol";
 
 struct InitArgs {
     // Token info
     address fundsRecipent;
-    address htmlRendererImpl;
     uint256 maxSupply;
     uint16 artistProofCount;
     // Metadata
@@ -18,7 +16,7 @@ struct InitArgs {
     string previewBaseURI;
     string script;
     address interactor;
-    IHTMLRenderer.ExternalScript[] imports;
+    LibHTMLRenderer.ScriptRequest[] imports;
     // Sale info
     uint64 presaleStartTime;
     uint64 presaleEndTime;
@@ -34,6 +32,7 @@ contract FixedPriceTokenInitilizer is WithStorage {
         address factory,
         address o11y,
         address feeManager,
+        address ethFS,
         bytes memory rawArgs
     ) internal returns (InitArgs memory args) {
         args = abi.decode(rawArgs, (InitArgs));
@@ -42,12 +41,10 @@ contract FixedPriceTokenInitilizer is WithStorage {
         ts().o11y = o11y;
         ts().feeManager = feeManager;
         ts().fundsRecipent = args.fundsRecipent;
+        ts().ethFS = ethFS;
         ts().interactor = args.interactor;
         ts().maxSupply = args.maxSupply;
         ts().allowedMinters[owner] = true;
-        ts().htmlRenderer = address(
-            new HTMLRendererProxy(args.htmlRendererImpl, "")
-        );
 
         ms().name = args.name;
         ms().symbol = args.symbol;
@@ -62,8 +59,6 @@ contract FixedPriceTokenInitilizer is WithStorage {
         fixedPriceSaleInfo().publicPrice = args.publicPrice;
 
         _addManyImports(args.imports);
-
-        IHTMLRenderer(ts().htmlRenderer).initilize(owner);
     }
 
     function constructInitalProps(
@@ -73,7 +68,7 @@ contract FixedPriceTokenInitilizer is WithStorage {
     }
 
     function _addManyImports(
-        IHTMLRenderer.ExternalScript[] memory _imports
+        LibHTMLRenderer.ScriptRequest[] memory _imports
     ) private {
         uint256 numImports = _imports.length;
         for (uint256 i; i < numImports; ++i) {
