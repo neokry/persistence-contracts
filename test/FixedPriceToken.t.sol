@@ -17,56 +17,25 @@ import {TokenFactory} from "../src/TokenFactory.sol";
 import {FeeManager} from "../src/FeeManager.sol";
 import {LibHTMLRenderer} from "../src/libraries/LibHTMLRenderer.sol";
 
-contract FixedPriceTokenTest is Test {
-    FixedPriceToken token;
-    address factory = address(1);
-    address owner = address(2);
-    address user = address(3);
-    address otherUser = address(4);
-    address treasury = address(8);
-    address ethfs = address(9);
-    address tokenImplUpgrade;
-    uint64 startTime = 0;
-    uint64 endTime = 0;
-    string script = "let x = 1;";
-    string previewBaseURI = "https://example.com/";
+import {FixedPriceTokenUtils} from "./utils/FixedPriceTokenUtils.sol";
 
+contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
     using StringsUpgradeable for uint256;
 
     function setUp() public {
-        address o11y = address(new Observability());
-        TokenFactory tokenFactory = new TokenFactory();
-        factory = address(tokenFactory);
-        address feeManager = address(new FeeManager(1000, treasury));
-
-        address tokenImpl = address(
-            new FixedPriceToken(factory, o11y, feeManager, ethfs)
-        );
-
-        tokenImplUpgrade = address(
-            new FixedPriceToken(factory, o11y, feeManager, ethfs)
-        );
-
-        tokenFactory.registerDeployment(tokenImpl);
-
-        tokenFactory.registerUpgrade(tokenImpl, tokenImplUpgrade);
-
-        token = FixedPriceToken(address(new TokenProxy(tokenImpl, "")));
-
-        startTime = uint64(block.timestamp);
-        endTime = uint64(block.timestamp + 2 days);
+        _setUp();
     }
 
     function test_onlyFactoryCanInitilize() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         IToken.TokenInfo memory tokenInfo = token.tokenInfo();
         IToken.MetadataInfo memory metadataInfo = token.metadataInfo();
         FixedPriceSaleInfo memory saleInfo = token.saleInfo();
 
         require(
-            keccak256(abi.encodePacked(metadataInfo.name)) ==
+            keccak256(abi.encodePacked(metadataInfo.urlEncodedName)) ==
                 keccak256(abi.encodePacked("Test")),
             "Invalid name"
         );
@@ -76,7 +45,7 @@ contract FixedPriceTokenTest is Test {
             "Invalid symbol"
         );
         require(
-            keccak256(abi.encodePacked(metadataInfo.description)) ==
+            keccak256(abi.encodePacked(metadataInfo.urlEncodedDescription)) ==
                 keccak256(abi.encodePacked("Test description")),
             "Invalid description"
         );
@@ -92,12 +61,12 @@ contract FixedPriceTokenTest is Test {
 
     function testRevert_onlyFactoryCanInitilize() public {
         vm.expectRevert();
-        initToken();
+        _initToken();
     }
 
     function test_purchase() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         vm.deal(user, 1 ether);
 
@@ -112,7 +81,7 @@ contract FixedPriceTokenTest is Test {
 
     function test_purchaseMultiple() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         vm.deal(user, 9 ether);
 
@@ -123,7 +92,7 @@ contract FixedPriceTokenTest is Test {
 
     function test_purchaseZero() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         vm.startPrank(user);
         vm.expectRevert(IFixedPriceToken.InvalidAmount.selector);
@@ -133,7 +102,7 @@ contract FixedPriceTokenTest is Test {
 
     function testRevert_soldOut() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         vm.deal(user, 11 ether);
 
@@ -145,7 +114,7 @@ contract FixedPriceTokenTest is Test {
 
     function testRevert_purchaseSaleNotActive() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         vm.deal(user, 1 ether);
         vm.warp(endTime + 1 seconds);
@@ -165,7 +134,7 @@ contract FixedPriceTokenTest is Test {
 
     function testRevert_purchaseInvalidPrice() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         vm.deal(user, 1 ether);
 
@@ -177,7 +146,7 @@ contract FixedPriceTokenTest is Test {
 
     function test_withdraw() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         vm.deal(user, 1 ether);
 
@@ -198,7 +167,7 @@ contract FixedPriceTokenTest is Test {
 
     function test_multiWithdraw() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         vm.deal(user, 2 ether);
 
@@ -218,7 +187,7 @@ contract FixedPriceTokenTest is Test {
 
     function test_multiWithdrawMultiUser() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         vm.deal(user, 2 ether);
 
@@ -244,7 +213,7 @@ contract FixedPriceTokenTest is Test {
 
     function test_ownerSafeMint() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         vm.startPrank(owner);
         token.safeMint(owner);
@@ -253,7 +222,7 @@ contract FixedPriceTokenTest is Test {
 
     function testRevert_unverifiedSafeMint() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         vm.startPrank(user);
         vm.expectRevert(IToken.SenderNotMinter.selector);
@@ -263,7 +232,7 @@ contract FixedPriceTokenTest is Test {
 
     function test_upgrade() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         vm.startPrank(owner);
         token.upgradeTo(tokenImplUpgrade);
@@ -272,7 +241,7 @@ contract FixedPriceTokenTest is Test {
 
     function testRevert_upgradeNotRegistered() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         vm.startPrank(owner);
         vm.expectRevert(
@@ -284,7 +253,7 @@ contract FixedPriceTokenTest is Test {
 
     function testRevert_upgradeNotOwner() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         vm.startPrank(user);
         vm.expectRevert("Ownable: caller is not the owner");
@@ -294,7 +263,7 @@ contract FixedPriceTokenTest is Test {
 
     function testRevert_upgradeToAndCallNotRegistered() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         vm.startPrank(owner);
         vm.expectRevert(
@@ -306,7 +275,7 @@ contract FixedPriceTokenTest is Test {
 
     function testRevert_upgradeToAndCallNotOwner() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         vm.startPrank(user);
         vm.expectRevert("Ownable: caller is not the owner");
@@ -316,7 +285,7 @@ contract FixedPriceTokenTest is Test {
 
     function testGeneratePreviewURI() public {
         vm.prank(factory);
-        initToken();
+        _initToken();
 
         string memory previewURI = token.generatePreviewURI("0");
         string memory expected = string.concat(
@@ -330,42 +299,5 @@ contract FixedPriceTokenTest is Test {
             keccak256(abi.encodePacked(previewURI)) ==
                 keccak256(abi.encodePacked(expected))
         );
-    }
-
-    function initToken() private {
-        LibHTMLRenderer.ScriptRequest[]
-            memory imports = new LibHTMLRenderer.ScriptRequest[](1);
-
-        imports[0] = LibHTMLRenderer.ScriptRequest({
-            name: "Test",
-            scriptType: LibHTMLRenderer.ScriptType.JAVASCRIPT_BASE64,
-            data: new bytes(0),
-            urlEncodedPrefix: new bytes(0),
-            urlEncodedSuffix: new bytes(0)
-        });
-
-        InitArgs memory args = InitArgs({
-            // Token info
-            fundsRecipent: owner,
-            maxSupply: 10,
-            artistProofCount: 1,
-            // Metadata
-            name: "Test",
-            symbol: "TST",
-            description: "Test description",
-            previewBaseURI: previewBaseURI,
-            script: script,
-            interactor: address(0),
-            imports: imports,
-            // Sale info
-            presaleStartTime: 0,
-            presaleEndTime: 0,
-            presalePrice: 0,
-            publicPrice: 1 ether,
-            publicStartTime: startTime,
-            publicEndTime: endTime
-        });
-
-        token.initialize(owner, abi.encode(args));
     }
 }

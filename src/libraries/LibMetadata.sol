@@ -24,8 +24,8 @@ library LibMetadata {
         uint256 tokenId
     ) public view returns (string memory) {
         string memory tokenIdString = tokenId.toString();
-        string memory fullName = string(
-            abi.encodePacked(ms().name, " ", tokenId)
+        string memory uriEncodedFullName = string(
+            abi.encodePacked(ms().urlEncodedName, "%20", tokenId)
         );
         uint256 blockDifficulty = ts().tokenIdToBlockDifficulty[tokenId];
 
@@ -40,24 +40,26 @@ library LibMetadata {
         });
 
         return
-            string.concat(
-                "data:application/json;base64,",
-                Base64.encode(
-                    abi.encodePacked(
-                        "data:application/json,",
-                        '{"name":"',
-                        fullName,
-                        '", "description":"',
-                        ms().description,
-                        '", "animation_url": "',
-                        LibHTMLRenderer.generateURLSafeHTML(
-                            imports,
-                            ms().bufferSize
-                        ),
-                        '", "image": "',
-                        generatePreviewURI(tokenIdString),
-                        '"}'
-                    )
+            string(
+                abi.encodePacked(
+                    "data:application/json,",
+                    //{"name":"
+                    "%7B%22name%22:%22",
+                    uriEncodedFullName,
+                    //","description":"
+                    "%22,%22description%22:%22",
+                    ms().urlEncodedDescription,
+                    //'","animation_url":"',
+                    "%22,%22animation_url%22:%22",
+                    LibHTMLRenderer.generateURLSafeHTML(
+                        imports,
+                        ms().bufferSize
+                    ),
+                    //","image":"
+                    "%22,%22image%22:%22",
+                    generatePreviewURI(tokenIdString),
+                    //"}
+                    "%22%7D"
                 )
             );
     }
@@ -68,7 +70,7 @@ library LibMetadata {
     ) public view returns (string memory) {
         return
             string.concat(
-                ms().previewBaseURI,
+                ms().urlEncodedPreviewBaseURI,
                 uint256(uint160(address(this))).toHexString(20),
                 "/",
                 tokenId

@@ -27,7 +27,9 @@ contract FixedPriceToken is
         address _o11y,
         address _feeManager,
         address _ethFS
-    ) TokenBase(_factory, _o11y, _feeManager, _ethFS) {}
+    ) TokenBase(_factory, _o11y, _feeManager, _ethFS) {
+        _disableInitializers();
+    }
 
     function initialize(
         address owner,

@@ -15,10 +15,10 @@ interface IToken {
     }
 
     struct MetadataInfo {
-        string name;
         string symbol;
-        string description;
-        string previewBaseURI;
+        string urlEncodedName;
+        string urlEncodedDescription;
+        string urlEncodedPreviewBaseURI;
         address scriptPointer;
         LibHTMLRenderer.ScriptRequest[] imports;
     }

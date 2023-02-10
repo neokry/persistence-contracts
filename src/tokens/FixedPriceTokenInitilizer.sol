@@ -12,8 +12,9 @@ struct InitArgs {
     // Metadata
     string name;
     string symbol;
-    string description;
-    string previewBaseURI;
+    string urlEncodedName;
+    string urlEncodedDescription;
+    string urlEncodedPreviewBaseURI;
     string script;
     address interactor;
     LibHTMLRenderer.ScriptRequest[] imports;
@@ -46,10 +47,10 @@ contract FixedPriceTokenInitilizer is WithStorage {
         ts().maxSupply = args.maxSupply;
         ts().allowedMinters[owner] = true;
 
-        ms().name = args.name;
         ms().symbol = args.symbol;
-        ms().description = args.description;
-        ms().previewBaseURI = args.previewBaseURI;
+        ms().urlEncodedName = args.urlEncodedName;
+        ms().urlEncodedDescription = args.urlEncodedDescription;
+        ms().urlEncodedPreviewBaseURI = args.urlEncodedPreviewBaseURI;
 
         fixedPriceSaleInfo().presaleStartTime = args.presaleStartTime;
         fixedPriceSaleInfo().presaleEndTime = args.presaleEndTime;
@@ -71,8 +72,12 @@ contract FixedPriceTokenInitilizer is WithStorage {
         LibHTMLRenderer.ScriptRequest[] memory _imports
     ) private {
         uint256 numImports = _imports.length;
-        for (uint256 i; i < numImports; ++i) {
-            ms().imports.push(_imports[i]);
+        uint256 i = 0;
+
+        unchecked {
+            do {
+                ms().imports.push(_imports[i]);
+            } while (++i < numImports);
         }
     }
 }

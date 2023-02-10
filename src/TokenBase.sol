@@ -107,10 +107,10 @@ abstract contract TokenBase is
     }
 
     function metadataInfo() public view returns (MetadataInfo memory info) {
-        info.name = ms().name;
         info.symbol = ms().symbol;
-        info.description = ms().description;
-        info.previewBaseURI = ms().previewBaseURI;
+        info.urlEncodedName = ms().urlEncodedName;
+        info.urlEncodedDescription = ms().urlEncodedDescription;
+        info.urlEncodedPreviewBaseURI = ms().urlEncodedPreviewBaseURI;
         info.scriptPointer = ms().scriptPointer;
         info.imports = ms().imports;
     }
@@ -129,7 +129,7 @@ abstract contract TokenBase is
 
     /// @notice get the preview base URI for the token
     function setPreviewBaseURL(string memory uri) public onlyOwner {
-        ms().previewBaseURI = uri;
+        ms().urlEncodedPreviewBaseURI = uri;
     }
 
     //[[[IMPORT FUNCTIONS]]]

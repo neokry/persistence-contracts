@@ -17,10 +17,10 @@ struct TokenStorage {
 }
 
 struct MetadataStorage {
-    string name;
     string symbol;
-    string description;
-    string previewBaseURI;
+    string urlEncodedName;
+    string urlEncodedDescription;
+    string urlEncodedPreviewBaseURI;
     address scriptPointer;
     uint256 bufferSize;
     LibHTMLRenderer.ScriptRequest[] imports;
