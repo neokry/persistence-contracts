@@ -7,6 +7,7 @@ import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Stri
 
 import {LibHTMLRenderer} from "./LibHTMLRenderer.sol";
 import {LibStorage, MetadataStorage, TokenStorage} from "./LibStorage.sol";
+import "forge-std/console2.sol";
 
 library LibMetadata {
     using StringsUpgradeable for uint256;
@@ -24,20 +25,11 @@ library LibMetadata {
         uint256 tokenId
     ) public view returns (string memory) {
         string memory tokenIdString = tokenId.toString();
-        string memory uriEncodedFullName = string(
-            abi.encodePacked(ms().urlEncodedName, "%20", tokenId)
+        string memory uriEncodedFullName = string.concat(
+            ms().urlEncodedName,
+            "%20",
+            tokenIdString
         );
-        uint256 blockDifficulty = ts().tokenIdToBlockDifficulty[tokenId];
-
-        LibHTMLRenderer.ScriptRequest[] memory imports = ms().imports;
-
-        imports[imports.length] = LibHTMLRenderer.ScriptRequest({
-            scriptType: LibHTMLRenderer.ScriptType.JAVASCRIPT_BASE64,
-            name: "",
-            data: generateFullScript(tokenIdString, blockDifficulty),
-            urlEncodedPrefix: new bytes(0),
-            urlEncodedSuffix: new bytes(0)
-        });
 
         return
             string(
@@ -51,9 +43,8 @@ library LibMetadata {
                     ms().urlEncodedDescription,
                     //'","animation_url":"',
                     "%22,%22animation_url%22:%22",
-                    LibHTMLRenderer.generateURLSafeHTML(
-                        imports,
-                        ms().bufferSize
+                    LibHTMLRenderer.generateDoubleURLEncodedHTML(
+                        getAllScripts(tokenId)
                     ),
                     //","image":"
                     "%22,%22image%22:%22",
@@ -64,7 +55,48 @@ library LibMetadata {
             );
     }
 
-    /// @notice generate a preview URI for the token
+    function getAllScripts(
+        uint256 tokenId
+    ) public view returns (LibHTMLRenderer.ScriptRequest[] memory) {
+        uint256 importsLength = ms().imports.length;
+
+        LibHTMLRenderer.ScriptRequest[]
+            memory scripts = new LibHTMLRenderer.ScriptRequest[](
+                importsLength + 2
+            );
+
+        uint256 i = 0;
+        unchecked {
+            do {
+                scripts[i] = ms().imports[i];
+            } while (++i < importsLength);
+        }
+
+        // Add the double url encoded persistence meta script
+        scripts[scripts.length - 2] = LibHTMLRenderer.ScriptRequest({
+            scriptType: LibHTMLRenderer.ScriptType.JAVASCRIPT_URL_ENCODED,
+            name: "",
+            data: generateMetaScript(
+                tokenId.toString(),
+                ts().tokenIdToBlockDifficulty[tokenId]
+            ),
+            urlEncodedPrefix: new bytes(0),
+            urlEncodedSuffix: new bytes(0)
+        });
+
+        // Add the base64 encoded token script
+        scripts[scripts.length - 1] = LibHTMLRenderer.ScriptRequest({
+            scriptType: LibHTMLRenderer.ScriptType.JAVASCRIPT_BASE64,
+            name: "",
+            data: SSTORE2.read(ms().scriptPointer),
+            urlEncodedPrefix: new bytes(0),
+            urlEncodedSuffix: new bytes(0)
+        });
+
+        return scripts;
+    }
+
+    /// @notice generate a url encoded preview URI for the token
     function generatePreviewURI(
         string memory tokenId
     ) public view returns (string memory) {
@@ -77,23 +109,25 @@ library LibMetadata {
             );
     }
 
-    /// @notice generate the full script for the token
-    function generateFullScript(
+    /// @notice generate the double url encoded meta script
+    function generateMetaScript(
         string memory tokenId,
         uint256 blockDifficulty
     ) public view returns (bytes memory) {
         return
             bytes(
                 string.concat(
-                    '<script>var persistence={blockDifficulty:"',
+                    //var persistence={blockDifficulty:"
+                    "var%2520persistence=%257BblockDifficulty:%2522",
                     blockDifficulty.toString(),
-                    '",tokenId:"',
+                    //",tokenId:"
+                    "%2522,tokenId:%2522",
                     tokenId,
-                    '",timestamp:"',
+                    //",timestamp:"
+                    "%2522,timestamp:%2522",
                     block.timestamp.toString(),
-                    '"};',
-                    string(SSTORE2.read(ms().scriptPointer)),
-                    "</script>"
+                    //"};
+                    "%2522%257D;"
                 )
             );
     }

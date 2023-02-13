@@ -22,7 +22,6 @@ struct MetadataStorage {
     string urlEncodedDescription;
     string urlEncodedPreviewBaseURI;
     address scriptPointer;
-    uint256 bufferSize;
     LibHTMLRenderer.ScriptRequest[] imports;
 }
 

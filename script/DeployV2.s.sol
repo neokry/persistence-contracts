@@ -28,7 +28,7 @@ contract Deploy is Script {
 
         address factory = _getKey("Factory");
         address o11y = _getKey("Observability");
-        address ethfs = address(0);
+        address ethfs = _getKey("ETHFS");
 
         console2.log("~~~~~~~~~~ Factory ADDRESS ~~~~~~~~~~~");
         console2.logAddress(factory);
@@ -49,7 +49,7 @@ contract Deploy is Script {
         vm.stopBroadcast();
 
         string memory filePath = string(
-            abi.encodePacked("deploys/", chainID.toString(), ".version1_1.txt")
+            abi.encodePacked("deploys/", chainID.toString(), ".version2.txt")
         );
 
         vm.writeLine(

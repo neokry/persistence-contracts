@@ -3,6 +3,8 @@ pragma solidity ^0.8.16;
 
 import {WithStorage} from "../libraries/LibStorage.sol";
 import {LibHTMLRenderer} from "../libraries/LibHTMLRenderer.sol";
+import {SSTORE2} from "@0xsequence/sstore2/contracts/SSTORE2.sol";
+import "forge-std/console2.sol";
 
 struct InitArgs {
     // Token info
@@ -15,7 +17,7 @@ struct InitArgs {
     string urlEncodedName;
     string urlEncodedDescription;
     string urlEncodedPreviewBaseURI;
-    string script;
+    string base64EncodedScript;
     address interactor;
     LibHTMLRenderer.ScriptRequest[] imports;
     // Sale info
@@ -51,6 +53,7 @@ contract FixedPriceTokenInitilizer is WithStorage {
         ms().urlEncodedName = args.urlEncodedName;
         ms().urlEncodedDescription = args.urlEncodedDescription;
         ms().urlEncodedPreviewBaseURI = args.urlEncodedPreviewBaseURI;
+        ms().scriptPointer = SSTORE2.write(bytes(args.base64EncodedScript));
 
         fixedPriceSaleInfo().presaleStartTime = args.presaleStartTime;
         fixedPriceSaleInfo().presaleEndTime = args.presaleEndTime;

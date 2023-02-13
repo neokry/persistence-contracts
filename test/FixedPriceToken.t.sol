@@ -7,16 +7,7 @@ import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Stri
 
 import {IToken} from "../src/tokens/interfaces/IToken.sol";
 import {IFixedPriceToken} from "../src/tokens/interfaces/IFixedPriceToken.sol";
-import {ITokenFactory} from "../src/interfaces/ITokenFactory.sol";
 import {FixedPriceSaleInfo} from "../src/libraries/LibStorage.sol";
-import {FixedPriceToken} from "../src/tokens/FixedPriceToken.sol";
-import {InitArgs} from "../src/tokens/FixedPriceTokenInitilizer.sol";
-import {Observability} from "../src/observability/Observability.sol";
-import {TokenProxy} from "../src/TokenProxy.sol";
-import {TokenFactory} from "../src/TokenFactory.sol";
-import {FeeManager} from "../src/FeeManager.sol";
-import {LibHTMLRenderer} from "../src/libraries/LibHTMLRenderer.sol";
-
 import {FixedPriceTokenUtils} from "./utils/FixedPriceTokenUtils.sol";
 
 contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
@@ -46,7 +37,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
         );
         require(
             keccak256(abi.encodePacked(metadataInfo.urlEncodedDescription)) ==
-                keccak256(abi.encodePacked("Test description")),
+                keccak256(abi.encodePacked("Test%20description")),
             "Invalid description"
         );
         require(tokenInfo.fundsRecipent == owner, "Invalid fundsRecipent");

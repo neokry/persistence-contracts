@@ -8,6 +8,8 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {TokenFactory} from "../src/TokenFactory.sol";
 import {IToken} from "../src/tokens/interfaces/IToken.sol";
 import {IFixedPriceToken} from "../src/tokens/interfaces/IFixedPriceToken.sol";
+import {InitArgs} from "../src/tokens/FixedPriceTokenInitilizer.sol";
+import {LibHTMLRenderer} from "../src/libraries/LibHTMLRenderer.sol";
 
 contract Mint is Script {
     using Strings for uint256;
@@ -17,8 +19,6 @@ contract Mint is Script {
     function _getKey(string memory key) internal view returns (address result) {
         (result) = abi.decode(vm.parseJson(configFile, key), (address));
     }
-
-    /*
 
     function run() public {
         uint256 chainID = vm.envUint("CHAIN_ID");
@@ -30,60 +30,62 @@ contract Mint is Script {
         );
 
         address owner = 0xa471C9508Acf13867282f36cfCe5c41D719ab78B;
-        address ethFSAdapter = _getKey("ETHFSAdapter");
         address factory = _getKey("Factory");
-        address htmlRenderer = _getKey("HTMLRendererImpl");
         address tokenImpl = _getKey("FixedPriceTokenImpl");
 
         vm.startBroadcast(deployerPrivateKey);
 
         string
-            memory script = 'let planets=[],xoff=0;function setup(){colorMode(HSB),createCanvas(400,400),angleMode(DEGREES);planets=[new Planet(60,200,300,120,1,80),new Planet(80,200,200,200,2,70),new Planet(20,200,180,140,4,300),new Planet(10,200,200,140,3,210),new Planet(26,200,140,240,1,111),new Planet(200,200,200,0,1,220),]}function draw(){background(0),createGrid(),planets.map($=>$.draw())}function createGrid(){let $=3*noise(xoff+=.01);for(let t=0;t<360;t+=$){let i=width/2+width*cos(t),s=height/2+width*sin(t);stroke(100,100,100),line(width/2,height/2,i,s)}}class Planet{constructor($,t,i,s,a,e){this.radius=$,this.x=t,this.y=i,this.scalar=s,this.angle=0,this.speed=a,this.color=e}draw(){let $=this.x-this.radius,t=this.y-this.radius,i=this.x+this.radius,s=this.y+this.radius,a=drawingContext.createRadialGradient($,t,i,s,200,20),e=color(100,100,100),l=color(100,100,100);a.addColorStop(0,e.toString()),a.addColorStop(.5,l.toString()),a.addColorStop(1,e.toString()),drawingContext.fillStyle=a,noStroke();let n=this.x+this.scalar*cos(this.angle),r=this.y+this.scalar*sin(this.angle);ellipse(n,r,this.radius,this.radius),drawingContext.fillStyle="white",this.angle+=this.speed}}';
+            memory base64EncodedScript = "bGV0IHBsYW5ldHM9W10seG9mZj0wO2Z1bmN0aW9uIHNldHVwKCl7Y29sb3JNb2RlKEhTQiksY3JlYXRlQ2FudmFzKDQwMCw0MDApLGFuZ2xlTW9kZShERUdSRUVTKTtwbGFuZXRzPVtuZXcgUGxhbmV0KDYwLDIwMCwzMDAsMTIwLDEsODApLG5ldyBQbGFuZXQoODAsMjAwLDIwMCwyMDAsMiw3MCksbmV3IFBsYW5ldCgyMCwyMDAsMTgwLDE0MCw0LDMwMCksbmV3IFBsYW5ldCgxMCwyMDAsMjAwLDE0MCwzLDIxMCksbmV3IFBsYW5ldCgyNiwyMDAsMTQwLDI0MCwxLDExMSksbmV3IFBsYW5ldCgyMDAsMjAwLDIwMCwwLDEsMjIwKSxdfWZ1bmN0aW9uIGRyYXcoKXtiYWNrZ3JvdW5kKDApLGNyZWF0ZUdyaWQoKSxwbGFuZXRzLm1hcCgkPT4kLmRyYXcoKSl9ZnVuY3Rpb24gY3JlYXRlR3JpZCgpe2xldCAkPTMqbm9pc2UoeG9mZis9LjAxKTtmb3IobGV0IHQ9MDt0PDM2MDt0Kz0kKXtsZXQgaT13aWR0aC8yK3dpZHRoKmNvcyh0KSxzPWhlaWdodC8yK3dpZHRoKnNpbih0KTtzdHJva2UoMTAwLDEwMCwxMDApLGxpbmUod2lkdGgvMixoZWlnaHQvMixpLHMpfX1jbGFzcyBQbGFuZXR7Y29uc3RydWN0b3IoJCx0LGkscyxhLGUpe3RoaXMucmFkaXVzPSQsdGhpcy54PXQsdGhpcy55PWksdGhpcy5zY2FsYXI9cyx0aGlzLmFuZ2xlPTAsdGhpcy5zcGVlZD1hLHRoaXMuY29sb3I9ZX1kcmF3KCl7bGV0ICQ9dGhpcy54LXRoaXMucmFkaXVzLHQ9dGhpcy55LXRoaXMucmFkaXVzLGk9dGhpcy54K3RoaXMucmFkaXVzLHM9dGhpcy55K3RoaXMucmFkaXVzLGE9ZHJhd2luZ0NvbnRleHQuY3JlYXRlUmFkaWFsR3JhZGllbnQoJCx0LGkscywyMDAsMjApLGU9Y29sb3IoMTAwLDEwMCwxMDApLGw9Y29sb3IoMTAwLDEwMCwxMDApO2EuYWRkQ29sb3JTdG9wKDAsZS50b1N0cmluZygpKSxhLmFkZENvbG9yU3RvcCguNSxsLnRvU3RyaW5nKCkpLGEuYWRkQ29sb3JTdG9wKDEsZS50b1N0cmluZygpKSxkcmF3aW5nQ29udGV4dC5maWxsU3R5bGU9YSxub1N0cm9rZSgpO2xldCBuPXRoaXMueCt0aGlzLnNjYWxhcipjb3ModGhpcy5hbmdsZSkscj10aGlzLnkrdGhpcy5zY2FsYXIqc2luKHRoaXMuYW5nbGUpO2VsbGlwc2UobixyLHRoaXMucmFkaXVzLHRoaXMucmFkaXVzKSxkcmF3aW5nQ29udGV4dC5maWxsU3R5bGU9IndoaXRlIix0aGlzLmFuZ2xlKz10aGlzLnNwZWVkfX0=";
         string
             memory previewBaseURI = "https://goerli.persistence.wtf/api/preview/";
 
-        IToken.TokenInfo memory tokenInfo = IToken.TokenInfo({
-            name: "Test",
-            symbol: "TST",
-            description: "Test Description",
-            fundsRecipent: owner,
-            maxSupply: 99999
+        LibHTMLRenderer.ScriptRequest[]
+            memory imports = new LibHTMLRenderer.ScriptRequest[](2);
+
+        imports[0] = LibHTMLRenderer.ScriptRequest({
+            name: "p5-1.5.0.min.js.gz",
+            scriptType: LibHTMLRenderer.ScriptType.JAVASCRIPT_GZIP,
+            data: new bytes(0),
+            urlEncodedPrefix: new bytes(0),
+            urlEncodedSuffix: new bytes(0)
         });
 
-        IFixedPriceToken.SaleInfo memory saleInfo = IFixedPriceToken.SaleInfo({
-            artistProofCount: 1,
-            price: 0,
-            startTime: 0,
-            endTime: 0
-        });
-
-        IHTMLRenderer.FileType[] memory imports = new IHTMLRenderer.FileType[](
-            2
-        );
-
-        imports[0] = IHTMLRenderer.FileType({
-            name: "p5-1.5.0.js.gz",
-            fileSystem: ethFSAdapter,
-            fileType: 2 //FILE_TYPE_JAVASCRIPT_GZIP
-        });
-
-        imports[1] = IHTMLRenderer.FileType({
+        imports[1] = LibHTMLRenderer.ScriptRequest({
             name: "gunzipScripts-0.0.1.js",
-            fileSystem: ethFSAdapter,
-            fileType: 1 //FILE_TYPE_JAVASCRIPT_BASE64
+            scriptType: LibHTMLRenderer.ScriptType.JAVASCRIPT_BASE64,
+            data: new bytes(0),
+            urlEncodedPrefix: new bytes(0),
+            urlEncodedSuffix: new bytes(0)
         });
 
-        bytes memory params = IFixedPriceToken(tokenImpl).constructInitalProps(
-            script,
-            previewBaseURI,
-            htmlRenderer,
-            address(0),
-            tokenInfo,
-            saleInfo,
-            imports
-        );
+        InitArgs memory args = InitArgs({
+            // Token info
+            fundsRecipent: owner,
+            maxSupply: 10,
+            artistProofCount: 1,
+            // Metadata
+            symbol: "TST",
+            name: "Test",
+            urlEncodedName: "Test",
+            urlEncodedDescription: "Test%20description",
+            urlEncodedPreviewBaseURI: previewBaseURI,
+            base64EncodedScript: base64EncodedScript,
+            interactor: address(0),
+            imports: imports,
+            // Sale info
+            presaleStartTime: 0,
+            presaleEndTime: 0,
+            presalePrice: 0,
+            publicPrice: 1 ether,
+            publicStartTime: 0,
+            publicEndTime: 0
+        });
 
-        address clone = TokenFactory(factory).create(tokenImpl, params);
+        address clone = TokenFactory(factory).create(
+            tokenImpl,
+            abi.encode(args)
+        );
 
         IToken(clone).safeMint(owner);
 
@@ -91,5 +93,4 @@ contract Mint is Script {
 
         vm.stopBroadcast();
     }
-    */
 }
