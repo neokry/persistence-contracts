@@ -4,6 +4,8 @@ pragma solidity ^0.8.16;
 import {LibHTMLRenderer} from "./LibHTMLRenderer.sol";
 
 struct TokenStorage {
+    mapping(uint256 => uint256) tokenIdToBlockDifficulty;
+    mapping(address => bool) allowedMinters;
     address factory;
     address o11y;
     address feeManager;
@@ -12,26 +14,27 @@ struct TokenStorage {
     address interactor;
     bool artistProofsMinted;
     uint256 maxSupply;
-    mapping(uint256 => uint256) tokenIdToBlockDifficulty;
-    mapping(address => bool) allowedMinters;
 }
 
 struct MetadataStorage {
+    LibHTMLRenderer.ScriptRequest[] imports;
     string symbol;
     string urlEncodedName;
     string urlEncodedDescription;
     string urlEncodedPreviewBaseURI;
     address scriptPointer;
-    LibHTMLRenderer.ScriptRequest[] imports;
 }
 
 struct FixedPriceSaleInfo {
-    uint64 presaleStartTime;
-    uint64 presaleEndTime;
-    uint112 presalePrice;
+    mapping(address => uint256) presaleMintsByAddress;
     uint64 publicStartTime;
     uint64 publicEndTime;
+    uint64 presaleStartTime;
+    uint64 presaleEndTime;
     uint112 publicPrice;
+    uint112 presalePrice;
+    uint64 maxPresaleMintsPerAddress;
+    bytes32 merkleRoot;
 }
 
 library LibStorage {

@@ -27,6 +27,8 @@ struct InitArgs {
     uint64 publicStartTime;
     uint64 publicEndTime;
     uint112 publicPrice;
+    uint64 maxPresaleMintsPerAddress;
+    bytes32 merkleRoot;
 }
 
 contract FixedPriceTokenInitilizer is WithStorage {
@@ -61,6 +63,9 @@ contract FixedPriceTokenInitilizer is WithStorage {
         fixedPriceSaleInfo().publicStartTime = args.publicStartTime;
         fixedPriceSaleInfo().publicEndTime = args.publicEndTime;
         fixedPriceSaleInfo().publicPrice = args.publicPrice;
+        fixedPriceSaleInfo().maxPresaleMintsPerAddress = args
+            .maxPresaleMintsPerAddress;
+        fixedPriceSaleInfo().merkleRoot = args.merkleRoot;
 
         _addManyImports(args.imports);
     }

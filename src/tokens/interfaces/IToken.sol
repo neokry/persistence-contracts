@@ -30,7 +30,11 @@ interface IToken {
     error ProofsMinted();
 
     /// @notice returns the total supply of tokens
-    function totalSupply() external returns (uint256);
+    function totalSupply() external view returns (uint256);
+
+    function tokenInfo() external view returns (TokenInfo memory info);
+
+    function metadataInfo() external view returns (MetadataInfo memory info);
 
     /// @notice withdraws the funds from the contract
     function withdraw() external returns (bool);

@@ -7,7 +7,6 @@ import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Stri
 
 import {IToken} from "../src/tokens/interfaces/IToken.sol";
 import {IFixedPriceToken} from "../src/tokens/interfaces/IFixedPriceToken.sol";
-import {FixedPriceSaleInfo} from "../src/libraries/LibStorage.sol";
 import {FixedPriceTokenUtils} from "./utils/FixedPriceTokenUtils.sol";
 
 contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
@@ -23,7 +22,8 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
         IToken.TokenInfo memory tokenInfo = token.tokenInfo();
         IToken.MetadataInfo memory metadataInfo = token.metadataInfo();
-        FixedPriceSaleInfo memory saleInfo = token.saleInfo();
+        IFixedPriceToken.FixedPriceSaleDetails memory saleDetails = token
+            .saleDetails();
 
         require(
             keccak256(abi.encodePacked(metadataInfo.urlEncodedName)) ==
@@ -43,10 +43,10 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
         require(tokenInfo.fundsRecipent == owner, "Invalid fundsRecipent");
         require(tokenInfo.maxSupply == 10, "Invalid totalSupply");
 
-        require(saleInfo.publicStartTime == startTime, "Invalid startTime");
-        require(saleInfo.publicEndTime == endTime, "Invalid endTime");
+        require(saleDetails.publicStartTime == startTime, "Invalid startTime");
+        require(saleDetails.publicEndTime == endTime, "Invalid endTime");
 
-        require(saleInfo.publicPrice == 1 ether, "Invalid price");
+        require(saleDetails.publicPrice == 1 ether, "Invalid price");
         require(token.totalSupply() == 1, "Proofs not minted");
     }
 
@@ -200,6 +200,97 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
         vm.stopPrank();
 
         require(owner.balance - prevBalance == 5 ether - fee);
+    }
+
+    function test_purchasePresale() public {
+        vm.prank(factory);
+        _initToken();
+
+        bytes32[] memory proof = new bytes32[](1);
+        proof[
+            0
+        ] = 0x12e46814651febb3096e11596a99293a2279d73edd9935d9528163bc1360baa9;
+
+        vm.deal(presaleUser, 0.5 ether);
+
+        vm.prank(presaleUser);
+        token.purchasePresale{value: 0.5 ether}(1, proof);
+    }
+
+    function test_purchasePresaleMulti() public {
+        vm.prank(factory);
+        _initToken();
+
+        bytes32[] memory proof = new bytes32[](1);
+        proof[
+            0
+        ] = 0x12e46814651febb3096e11596a99293a2279d73edd9935d9528163bc1360baa9;
+
+        vm.deal(presaleUser, 1 ether);
+
+        vm.prank(presaleUser);
+        token.purchasePresale{value: 1 ether}(2, proof);
+    }
+
+    function testRevert_purchasePresaleMaxPerUser() public {
+        vm.prank(factory);
+        _initToken();
+
+        bytes32[] memory proof = new bytes32[](1);
+        proof[
+            0
+        ] = 0x12e46814651febb3096e11596a99293a2279d73edd9935d9528163bc1360baa9;
+
+        vm.deal(presaleUser, 1.5 ether);
+
+        vm.expectRevert(
+            IFixedPriceToken.MaxPresaleMintsForUserExceeded.selector
+        );
+        vm.prank(presaleUser);
+        token.purchasePresale{value: 1.5 ether}(3, proof);
+    }
+
+    function testRevert_purchasePresaleInvalidPrice() public {
+        vm.prank(factory);
+        _initToken();
+
+        bytes32[] memory proof = new bytes32[](1);
+        proof[
+            0
+        ] = 0x12e46814651febb3096e11596a99293a2279d73edd9935d9528163bc1360baa9;
+
+        vm.deal(presaleUser, 0.5 ether);
+
+        vm.expectRevert(IFixedPriceToken.InvalidPrice.selector);
+        vm.prank(presaleUser);
+        token.purchasePresale{value: 0.5 ether}(2, proof);
+    }
+
+    function testRevert_purchasePresaleInvalidAmount() public {
+        vm.prank(factory);
+        _initToken();
+
+        bytes32[] memory proof = new bytes32[](1);
+        proof[
+            0
+        ] = 0x12e46814651febb3096e11596a99293a2279d73edd9935d9528163bc1360baa9;
+
+        vm.deal(presaleUser, 0.5 ether);
+
+        vm.expectRevert(IFixedPriceToken.InvalidAmount.selector);
+        vm.prank(presaleUser);
+        token.purchasePresale{value: 0.5 ether}(0, proof);
+    }
+
+    function testRevert_purchasePresaleInvalidProof() public {
+        vm.prank(factory);
+        _initToken();
+
+        vm.deal(user, 0.5 ether);
+
+        vm.expectRevert(IFixedPriceToken.InvalidProof.selector);
+        vm.prank(user);
+        token.purchasePresale{value: 0.5 ether}(1, new bytes32[](0));
     }
 
     function test_ownerSafeMint() public {

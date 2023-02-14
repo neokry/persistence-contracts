@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
 
-import {Base64} from "base64-sol/base64.sol";
 import {SSTORE2} from "@0xsequence/sstore2/contracts/SSTORE2.sol";
 import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 
+import {IInteractor} from "../interactors/interfaces/IInteractor.sol";
 import {LibHTMLRenderer} from "./LibHTMLRenderer.sol";
 import {LibStorage, MetadataStorage, TokenStorage} from "./LibStorage.sol";
 import "forge-std/console2.sol";
@@ -59,10 +59,11 @@ library LibMetadata {
         uint256 tokenId
     ) public view returns (LibHTMLRenderer.ScriptRequest[] memory) {
         uint256 importsLength = ms().imports.length;
+        bool hasInteractor = ts().interactor != address(0);
 
         LibHTMLRenderer.ScriptRequest[]
             memory scripts = new LibHTMLRenderer.ScriptRequest[](
-                importsLength + 2
+                importsLength + (hasInteractor ? 3 : 2)
             );
 
         uint256 i = 0;
@@ -73,16 +74,33 @@ library LibMetadata {
         }
 
         // Add the double url encoded persistence meta script
-        scripts[scripts.length - 2] = LibHTMLRenderer.ScriptRequest({
-            scriptType: LibHTMLRenderer.ScriptType.JAVASCRIPT_URL_ENCODED,
-            name: "",
-            data: generateMetaScript(
-                tokenId.toString(),
-                ts().tokenIdToBlockDifficulty[tokenId]
-            ),
-            urlEncodedPrefix: new bytes(0),
-            urlEncodedSuffix: new bytes(0)
-        });
+        scripts[scripts.length - (hasInteractor ? 3 : 2)] = LibHTMLRenderer
+            .ScriptRequest({
+                scriptType: LibHTMLRenderer.ScriptType.JAVASCRIPT_URL_ENCODED,
+                name: "",
+                data: generateMetaScript(
+                    tokenId.toString(),
+                    ts().tokenIdToBlockDifficulty[tokenId]
+                ),
+                urlEncodedPrefix: new bytes(0),
+                urlEncodedSuffix: new bytes(0)
+            });
+
+        // Add the interactor script if needed
+        if (hasInteractor) {
+            (
+                bytes memory data,
+                LibHTMLRenderer.ScriptType scriptType
+            ) = IInteractor(ts().interactor).getInteractionData(tokenId);
+
+            scripts[scripts.length - 2] = LibHTMLRenderer.ScriptRequest({
+                scriptType: scriptType,
+                name: "",
+                data: data,
+                urlEncodedPrefix: new bytes(0),
+                urlEncodedSuffix: new bytes(0)
+            });
+        }
 
         // Add the base64 encoded token script
         scripts[scripts.length - 1] = LibHTMLRenderer.ScriptRequest({

@@ -23,6 +23,7 @@ import {IObservability} from "./observability/Observability.sol";
 import {ITokenFactory} from "./interfaces/ITokenFactory.sol";
 
 import {IFeeManager} from "./interfaces/IFeeManager.sol";
+import {IInteractor} from "./interactors/interfaces/IInteractor.sol";
 import {WithStorage, TokenStorage, MetadataStorage} from "./libraries/LibStorage.sol";
 import {UUPS} from "./vendor/proxy/UUPS.sol";
 import {VersionedContract} from "./VersionedContract.sol";
@@ -130,6 +131,22 @@ abstract contract TokenBase is
     /// @notice get the preview base URI for the token
     function setPreviewBaseURL(string memory uri) public onlyOwner {
         ms().urlEncodedPreviewBaseURI = uri;
+    }
+
+    // [[[ INTERACTION FUNCTIONS ]]]
+
+    /// @notice interact with the token
+    function interact(
+        uint256 tokenId,
+        bytes calldata interactionData,
+        bytes calldata validationData
+    ) external {
+        IInteractor(ts().interactor).interact(
+            msg.sender,
+            tokenId,
+            interactionData,
+            validationData
+        );
     }
 
     //[[[IMPORT FUNCTIONS]]]

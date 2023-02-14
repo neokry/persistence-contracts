@@ -79,7 +79,9 @@ contract Mint is Script {
             presalePrice: 0,
             publicPrice: 1 ether,
             publicStartTime: 0,
-            publicEndTime: 0
+            publicEndTime: 0,
+            maxPresaleMintsPerAddress: 1,
+            merkleRoot: bytes32(0)
         });
 
         address clone = TokenFactory(factory).create(
