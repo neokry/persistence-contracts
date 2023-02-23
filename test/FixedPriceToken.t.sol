@@ -333,6 +333,23 @@ contract FixedPriceTokenTest is Test {
         );
     }
 
+    function test_SetSaleInfo() public {
+        vm.prank(factory);
+        initToken();
+
+        vm.prank(owner);
+        token.setSaleInfo(2000, 3000, 0.1 ether);
+    }
+
+    function testRevert_SetSaleInfoNotOwner() public {
+        vm.prank(factory);
+        initToken();
+
+        vm.prank(user);
+        vm.expectRevert("Ownable: caller is not the owner");
+        token.setSaleInfo(2000, 3000, 0.1 ether);
+    }
+
     function initToken() private {
         IToken.TokenInfo memory tokenInfo = IToken.TokenInfo({
             name: "Test",

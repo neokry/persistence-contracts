@@ -239,6 +239,19 @@ contract FixedPriceToken is
         }
     }
 
+    //[[[Sale Info Functions]]]
+
+    ///@notice allow owner to update sale info
+    function setSaleInfo(
+        uint64 startTime,
+        uint64 endTime,
+        uint112 price
+    ) external onlyOwner {
+        saleInfo.startTime = startTime;
+        saleInfo.endTime = endTime;
+        saleInfo.price = price;
+    }
+
     //[[[[PRIVATE FUNCTIONS]]]]
     /// @notice adds a single import
     function _addImport(IHTMLRenderer.FileType memory _import) private {
