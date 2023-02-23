@@ -9,19 +9,15 @@ import {FixedPriceTokenUtils} from "./utils/FixedPriceTokenUtils.sol";
 
 contract HTMLRendererTest is Test, FixedPriceTokenUtils {
     function setUp() public {
-        string memory GOERLI_RPC_URL = vm.envString("GOERLI_RPC_URL");
-        vm.createSelectFork(GOERLI_RPC_URL);
-
         _setUp();
 
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
     }
 
-    function testMetadata() public {
+    function testFork_tokenURI() public {
         vm.prank(owner);
         token.safeMint(owner);
-
-        emit log_string(token.tokenURI(0));
+        token.tokenURI(0);
     }
 }

@@ -50,7 +50,7 @@ abstract contract FixedPriceTokenUtils {
         endTime = uint64(block.timestamp + 2 days);
     }
 
-    function _initToken() internal {
+    function _initToken(uint256 maxSupply) internal {
         LibHTMLRenderer.ScriptRequest[]
             memory imports = new LibHTMLRenderer.ScriptRequest[](2);
 
@@ -73,7 +73,7 @@ abstract contract FixedPriceTokenUtils {
         InitArgs memory args = InitArgs({
             // Token info
             fundsRecipent: owner,
-            maxSupply: 10,
+            maxSupply: maxSupply,
             artistProofCount: 1,
             // Metadata
             name: "Test",

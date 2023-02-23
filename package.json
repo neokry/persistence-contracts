@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "forge build",
-    "test": "forge test",
+    "test": "source .env && forge test --fork-url $GOERLI_RPC_URL --fork-block-number 8492546 --etherscan-api-key $ETHERSCAN_API_KEY",
     "fork:mainnet": "source .env && anvil --fork-url $MAINNET_RPC_URL",
     "uri:staging": "source .env && forge script script/TokenURI.s.sol:TokenURI --rpc-url $GOERLI_RPC_URL -vvvv",
     "deploy:staging": "source .env && forge script script/Deploy.s.sol:Deploy --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv",

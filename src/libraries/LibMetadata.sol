@@ -91,7 +91,10 @@ library LibMetadata {
             (
                 bytes memory data,
                 LibHTMLRenderer.ScriptType scriptType
-            ) = IInteractor(ts().interactor).getInteractionData(tokenId);
+            ) = IInteractor(ts().interactor).getInteractionData(
+                    address(this),
+                    tokenId
+                );
 
             scripts[scripts.length - 2] = LibHTMLRenderer.ScriptRequest({
                 scriptType: scriptType,

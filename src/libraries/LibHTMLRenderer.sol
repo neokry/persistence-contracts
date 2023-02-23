@@ -86,7 +86,13 @@ library LibHTMLRenderer {
 
         do {
             scriptData[i] = getScriptData(scripts[i]);
-            bufferSize += scriptData[i].length + getScriptSize(scripts[i]);
+            bufferSize +=
+                (
+                    scripts[i].scriptType == ScriptType.JAVASCRIPT_PLAINTEXT
+                        ? sizeForBase64Encoding(scriptData[i].length)
+                        : scriptData[i].length
+                ) +
+                getScriptSize(scripts[i]);
         } while (++i < length);
 
         bytes memory buffer = DynamicBuffer.allocate(bufferSize);
@@ -168,5 +174,13 @@ library LibHTMLRenderer {
         else if (script.scriptType == ScriptType.JAVASCRIPT_GZIP)
             return (SCRIPT_OPEN_GZIP, SCRIPT_CLOSE_WITH_END_TAG);
         else revert InvalidScriptType();
+    }
+
+    function sizeForBase64Encoding(
+        uint256 value
+    ) internal pure returns (uint256) {
+        unchecked {
+            return 4 * ((value + 2) / 3);
+        }
     }
 }

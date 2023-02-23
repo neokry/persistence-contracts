@@ -18,7 +18,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function test_onlyFactoryCanInitilize() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         IToken.TokenInfo memory tokenInfo = token.tokenInfo();
         IToken.MetadataInfo memory metadataInfo = token.metadataInfo();
@@ -52,12 +52,12 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function testRevert_onlyFactoryCanInitilize() public {
         vm.expectRevert();
-        _initToken();
+        _initToken(10);
     }
 
     function test_purchase() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.deal(user, 1 ether);
 
@@ -72,7 +72,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function test_purchaseMultiple() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.deal(user, 9 ether);
 
@@ -83,7 +83,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function test_purchaseZero() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.startPrank(user);
         vm.expectRevert(IFixedPriceToken.InvalidAmount.selector);
@@ -93,7 +93,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function testRevert_soldOut() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.deal(user, 11 ether);
 
@@ -105,7 +105,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function testRevert_purchaseSaleNotActive() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.deal(user, 1 ether);
         vm.warp(endTime + 1 seconds);
@@ -125,7 +125,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function testRevert_purchaseInvalidPrice() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.deal(user, 1 ether);
 
@@ -137,7 +137,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function test_withdraw() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.deal(user, 1 ether);
 
@@ -158,7 +158,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function test_multiWithdraw() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.deal(user, 2 ether);
 
@@ -178,7 +178,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function test_multiWithdrawMultiUser() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.deal(user, 2 ether);
 
@@ -204,7 +204,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function test_purchasePresale() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         bytes32[] memory proof = new bytes32[](1);
         proof[
@@ -219,7 +219,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function test_purchasePresaleMulti() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         bytes32[] memory proof = new bytes32[](1);
         proof[
@@ -234,7 +234,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function testRevert_purchasePresaleMaxPerUser() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         bytes32[] memory proof = new bytes32[](1);
         proof[
@@ -252,7 +252,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function testRevert_purchasePresaleInvalidPrice() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         bytes32[] memory proof = new bytes32[](1);
         proof[
@@ -268,7 +268,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function testRevert_purchasePresaleInvalidAmount() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         bytes32[] memory proof = new bytes32[](1);
         proof[
@@ -284,7 +284,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function testRevert_purchasePresaleInvalidProof() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.deal(user, 0.5 ether);
 
@@ -295,7 +295,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function test_ownerSafeMint() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.startPrank(owner);
         token.safeMint(owner);
@@ -304,7 +304,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function testRevert_unverifiedSafeMint() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.startPrank(user);
         vm.expectRevert(IToken.SenderNotMinter.selector);
@@ -314,7 +314,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function test_upgrade() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.startPrank(owner);
         token.upgradeTo(tokenImplUpgrade);
@@ -323,7 +323,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function testRevert_upgradeNotRegistered() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.startPrank(owner);
         vm.expectRevert(
@@ -335,7 +335,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function testRevert_upgradeNotOwner() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.startPrank(user);
         vm.expectRevert("Ownable: caller is not the owner");
@@ -345,7 +345,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function testRevert_upgradeToAndCallNotRegistered() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.startPrank(owner);
         vm.expectRevert(
@@ -357,7 +357,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function testRevert_upgradeToAndCallNotOwner() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         vm.startPrank(user);
         vm.expectRevert("Ownable: caller is not the owner");
@@ -367,7 +367,7 @@ contract FixedPriceTokenTest is Test, FixedPriceTokenUtils {
 
     function testGeneratePreviewURI() public {
         vm.prank(factory);
-        _initToken();
+        _initToken(10);
 
         string memory previewURI = token.generatePreviewURI("0");
         string memory expected = string.concat(
