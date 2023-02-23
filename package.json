@@ -19,7 +19,8 @@
     "deploy:dev": "forge script script/DeployDev.s.sol:Deploy --fork-url http://localhost:8545 --broadcast",
     "mint:dev": "forge script script/MintDev.s.sol:Mint --fork-url http://localhost:8545 --broadcast -vvvv",
     "uri:dev": "forge script script/TokenURIDev.s.sol:TokenURI --fork-url http://localhost:8545 --broadcast -vvvv",
-    "verify:factory": "forge verify-contract --chain-id 5 --flatten --watch --constructor-args 0x000000000000000000000000fd236c049a9eb8165e5a7bc85ceb4c91c3a73f9a 0xd36c3492ceb5566a904f3dfeab7bb9203dd7bdb8 src/MathBlocksToken/MathBlocksFactory.sol:MathBlocksFactory $ETHERSCAN_API_KEY"
+    "verify:factory": "forge verify-contract --chain-id 5 --flatten --watch --constructor-args 0x000000000000000000000000fd236c049a9eb8165e5a7bc85ceb4c91c3a73f9a 0xd36c3492ceb5566a904f3dfeab7bb9203dd7bdb8 src/MathBlocksToken/MathBlocksFactory.sol:MathBlocksFactory $ETHERSCAN_API_KEY",
+    "deploy:v12": "source .env && forge script script/DeployV12.s.sol:Deploy --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv"
   },
   "repository": {
     "type": "git",
