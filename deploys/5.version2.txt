@@ -1,1 +1,4 @@
 FixedPriceToken Upgrade implementation: 0xa3cfa56a34ac9fbafc7f46c3e6a1946fa11e61c0
+FixedPriceToken Upgrade implementation: 0xa3cfa56a34ac9fbafc7f46c3e6a1946fa11e61c0
+FixedPriceToken Upgrade implementation: 0xa3cfa56a34ac9fbafc7f46c3e6a1946fa11e61c0
+FixedPriceToken Upgrade implementation: 0xa3cfa56a34ac9fbafc7f46c3e6a1946fa11e61c0

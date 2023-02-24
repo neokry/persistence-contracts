@@ -34,6 +34,12 @@ contract Deploy is Script {
         console2.log("~~~~~~~~~~ Observability ADDRESS ~~~~~~~~~~~");
         console2.logAddress(o11y);
 
+        console2.log("~~~~~~~~~~ Deployer ADDRESS ~~~~~~~~~~~");
+        console2.logAddress(vm.addr(deployerPrivateKey));
+
+        console2.log("~~~~~~~~~~ Deployer BALANCE ~~~~~~~~~~~");
+        console2.logUint(vm.addr(deployerPrivateKey).balance);
+
         vm.startBroadcast(deployerPrivateKey);
 
         address tokenImpl = address(new FixedPriceToken(factory, o11y));
@@ -41,7 +47,7 @@ contract Deploy is Script {
         vm.stopBroadcast();
 
         string memory filePath = string(
-            abi.encodePacked("deploys/", chainID.toString(), ".version2.txt")
+            abi.encodePacked("deploys/", chainID.toString(), ".version12.txt")
         );
 
         vm.writeLine(

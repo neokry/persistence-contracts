@@ -1,0 +1,1 @@
+FixedPriceToken Upgrade implementation: 0x3cc6ba057f394b00ac1ff48707d5c04de29504c6
