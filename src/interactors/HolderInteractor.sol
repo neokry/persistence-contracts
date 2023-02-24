@@ -33,14 +33,16 @@ contract HolderInteractor is IInteractor {
             tokenToDataPointer[tokenContract][tokenId]
         );
 
-        buffer = DynamicBuffer.allocate(data.length + SCRIPT_META_BYTES);
+        buffer = DynamicBuffer.allocate(data.length * 2 + SCRIPT_META_BYTES);
 
         DynamicBuffer.appendSafe(buffer, 'window.__userData={"');
         DynamicBuffer.appendSafe(buffer, bytes(tokenId.toString()));
         DynamicBuffer.appendSafe(buffer, '":"');
-        DynamicBuffer.appendSafe(
+        DynamicBuffer.appendSafeBase64(
             buffer,
-            SSTORE2.read(tokenToDataPointer[tokenContract][tokenId])
+            SSTORE2.read(tokenToDataPointer[tokenContract][tokenId]),
+            false,
+            false
         );
         DynamicBuffer.appendSafe(buffer, '"};');
 
@@ -58,7 +60,7 @@ contract HolderInteractor is IInteractor {
             revert InvalidInteraction();
 
         tokenToDataPointer[msg.sender][tokenId] = SSTORE2.write(
-            abi.encodePacked(interactionData)
+            interactionData
         );
     }
 }
