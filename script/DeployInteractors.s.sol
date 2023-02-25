@@ -28,51 +28,16 @@ contract Deploy is Script {
             string.concat("./addresses/", Strings.toString(chainID), ".json")
         );
 
-        address factory = _getKey("Factory");
-        address o11y = _getKey("Observability");
-        address ethfs = _getKey("ETHFS");
-
-        console2.log("~~~~~~~~~~ Factory ADDRESS ~~~~~~~~~~~");
-        console2.logAddress(factory);
-
-        console2.log("~~~~~~~~~~ Observability ADDRESS ~~~~~~~~~~~");
-        console2.logAddress(o11y);
-
         vm.startBroadcast(deployerPrivateKey);
-
-        address feeManager = address(
-            new FeeManager(1000, 0x04bfb0034F24E424489F566f32D1f57647469f9E)
-        );
-
-        address tokenImpl = address(
-            new FixedPriceToken(factory, o11y, feeManager, ethfs)
-        );
 
         address holderInteractor = address(new HolderInteractor());
 
-        address canvasInteractor = address(new CanvasInteractor());
+        //address canvasInteractor = address(new CanvasInteractor());
 
         vm.stopBroadcast();
 
         string memory filePath = string(
-            abi.encodePacked("deploys/", chainID.toString(), ".version2.txt")
-        );
-
-        vm.writeLine(
-            filePath,
-            string(
-                abi.encodePacked(
-                    "FixedPriceToken Upgrade implementation: ",
-                    addressToString(tokenImpl)
-                )
-            )
-        );
-
-        vm.writeLine(
-            filePath,
-            string(
-                abi.encodePacked("FeeManager: ", addressToString(feeManager))
-            )
+            abi.encodePacked("deploys/", chainID.toString(), ".interactors.txt")
         );
 
         vm.writeLine(
@@ -85,6 +50,7 @@ contract Deploy is Script {
             )
         );
 
+        /*
         vm.writeLine(
             filePath,
             string(
@@ -94,6 +60,7 @@ contract Deploy is Script {
                 )
             )
         );
+        */
     }
 
     function addressToString(

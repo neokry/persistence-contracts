@@ -7,6 +7,21 @@ interface IInteractor {
     error InvalidInteraction();
     error InvalidData();
 
+    event InteractionDataUpdated(
+        address indexed user,
+        address indexed tokenContract,
+        uint256 indexed tokenId,
+        bytes data
+    );
+
+    function isValidInteraction(
+        address user,
+        address tokenContract,
+        uint256 tokenId,
+        bytes calldata interactionData,
+        bytes calldata validationData
+    ) external view returns (bool);
+
     function getInteractionData(
         address tokenContract,
         uint256 tokenId

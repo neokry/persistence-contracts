@@ -32,7 +32,7 @@ contract HolderInteractorTest is Test, FixedPriceTokenUtils {
 
         /*
         require(
-            keccak256(newData) == keccak256('window.__userData={0:"123"};'),
+            keccak256(newData) == keccak256('window.__rt_user={0:"123"};'),
             "invalid data"
         );
         */
@@ -45,7 +45,6 @@ contract HolderInteractorTest is Test, FixedPriceTokenUtils {
         token.safeMint(owner);
 
         uint256 i = 0;
-        uint256 length = 100;
 
         bytes memory interactionData = new bytes(123);
         token.interact(0, interactionData, new bytes(0));

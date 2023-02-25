@@ -30,9 +30,11 @@ import {VersionedContract} from "./VersionedContract.sol";
 import {LibToken} from "./libraries/LibToken.sol";
 import {LibHTMLRenderer} from "./libraries/LibHTMLRenderer.sol";
 import {LibMetadata} from "./libraries/LibMetadata.sol";
+import {IInteractable} from "./interactors/interfaces/IInteractable.sol";
 
 abstract contract TokenBase is
     IToken,
+    IInteractable,
     WithStorage,
     ERC721Upgradeable,
     ReentrancyGuardUpgradeable,
@@ -95,6 +97,10 @@ abstract contract TokenBase is
         string memory tokenId
     ) external view returns (string memory) {
         return LibMetadata.generatePreviewURI(tokenId);
+    }
+
+    function getInteractor() external view returns (address) {
+        return ts().interactor;
     }
 
     function tokenInfo() public view returns (TokenInfo memory info) {

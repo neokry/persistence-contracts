@@ -14,16 +14,23 @@ import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Stri
 contract HolderInteractor is IInteractor {
     using StringsUpgradeable for uint256;
 
-    uint256 constant UINT256_BYTES = 32;
-
-    // persistence.interaction=[];
-    uint256 constant SCRIPT_META_BYTES = 27;
-
-    // n,
-    uint256 constant VALUE_META_BYTES = 2;
+    // window.__rt_user=%7B%2210000%22:%22%22%7D;
+    uint256 constant SCRIPT_META_BYTES = 42;
 
     ///@notice Token contract => Token Id => Interaction data pointer
     mapping(address => mapping(uint256 => address)) public tokenToDataPointer;
+
+    // [[[ View Functions ]]]
+
+    function isValidInteraction(
+        address user,
+        address tokenContract,
+        uint256 tokenId,
+        bytes calldata interactionData,
+        bytes calldata validationData
+    ) external view returns (bool) {
+        return _isValidInteraction(user, tokenContract, tokenId);
+    }
 
     function getInteractionData(
         address tokenContract,
@@ -33,21 +40,25 @@ contract HolderInteractor is IInteractor {
             tokenToDataPointer[tokenContract][tokenId]
         );
 
-        buffer = DynamicBuffer.allocate(data.length * 2 + SCRIPT_META_BYTES);
+        buffer = DynamicBuffer.allocate(
+            _sizeForBase64Encoding(data.length) + SCRIPT_META_BYTES
+        );
 
-        DynamicBuffer.appendSafe(buffer, 'window.__userData={"');
+        DynamicBuffer.appendSafe(buffer, "window.__rt_user=%7B%22");
         DynamicBuffer.appendSafe(buffer, bytes(tokenId.toString()));
-        DynamicBuffer.appendSafe(buffer, '":"');
+        DynamicBuffer.appendSafe(buffer, "%22:%22");
         DynamicBuffer.appendSafeBase64(
             buffer,
             SSTORE2.read(tokenToDataPointer[tokenContract][tokenId]),
             false,
             false
         );
-        DynamicBuffer.appendSafe(buffer, '"};');
+        DynamicBuffer.appendSafe(buffer, "%22%7D;");
 
-        return (buffer, LibHTMLRenderer.ScriptType.JAVASCRIPT_PLAINTEXT);
+        return (buffer, LibHTMLRenderer.ScriptType.JAVASCRIPT_URL_ENCODED);
     }
+
+    /// [[[ Interaction Function ]]]
 
     /// @notice This function returns true if the user is the owner of the token
     function interact(
@@ -56,11 +67,31 @@ contract HolderInteractor is IInteractor {
         bytes calldata interactionData,
         bytes calldata validationData
     ) external {
-        if (user != IERC721Upgradeable(msg.sender).ownerOf(tokenId))
+        if (!_isValidInteraction(user, msg.sender, tokenId))
             revert InvalidInteraction();
 
         tokenToDataPointer[msg.sender][tokenId] = SSTORE2.write(
             interactionData
         );
+
+        emit InteractionDataUpdated(user, msg.sender, tokenId, interactionData);
+    }
+
+    // [[[ Private Functions ]]]
+
+    function _isValidInteraction(
+        address user,
+        address tokenContract,
+        uint256 tokenId
+    ) internal view returns (bool) {
+        return user == IERC721Upgradeable(tokenContract).ownerOf(tokenId);
+    }
+
+    function _sizeForBase64Encoding(
+        uint256 value
+    ) internal pure returns (uint256) {
+        unchecked {
+            return 4 * ((value + 2) / 3);
+        }
     }
 }
