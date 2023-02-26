@@ -8,17 +8,22 @@ import {IFixedPriceToken} from "./interfaces/IFixedPriceToken.sol";
 import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
 import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import {FixedPriceTokenStorageV1} from "./storage/FixedPriceTokenStorageV1.sol";
+import {FixedPriceTokenStorageV2} from "./storage/FixedPriceTokenStorageV2.sol";
 import {ITokenFactory} from "../interfaces/ITokenFactory.sol";
 import {HTMLRendererProxy} from "../renderer/HTMLRendererProxy.sol";
 import {IHTMLRenderer} from "../renderer/interfaces/IHTMLRenderer.sol";
 import {IFileStore} from "ethfs/IFileStore.sol";
 import {SSTORE2} from "@0xsequence/sstore2/contracts/SSTORE2.sol";
 import {Base64} from "base64-sol/base64.sol";
+import {IInteractable} from "../interactors/interfaces/IInteractable.sol";
+import {IInteractor} from "../interactors/interfaces/IInteractor.sol";
 
 contract FixedPriceToken is
     IFixedPriceToken,
     TokenBase,
-    FixedPriceTokenStorageV1
+    FixedPriceTokenStorageV1,
+    FixedPriceTokenStorageV2,
+    IInteractable
 {
     using StringsUpgradeable for uint256;
 
@@ -167,7 +172,11 @@ contract FixedPriceToken is
     ) public view returns (string memory) {
         return
             string.concat(
-                '<script>var blockHash="',
+                "<script>",
+                (interactor != address(0))
+                    ? string(getInteractionData(tokenId))
+                    : "",
+                'var blockHash="',
                 uint256(tokenIdToPreviousBlockHash[tokenId]).toString(),
                 '";var tokenId="',
                 tokenId.toString(),
@@ -250,6 +259,38 @@ contract FixedPriceToken is
         saleInfo.startTime = startTime;
         saleInfo.endTime = endTime;
         saleInfo.price = price;
+    }
+
+    // [[[ Interactor Functions ]]]
+
+    function getInteractor() external view returns (address) {
+        return interactor;
+    }
+
+    function setInteractor(address _interactor) external {
+        interactor = _interactor;
+    }
+
+    function interact(
+        uint256 tokenId,
+        bytes calldata interactionData,
+        bytes calldata validationData
+    ) external {
+        IInteractor(interactor).interact(
+            msg.sender,
+            tokenId,
+            interactionData,
+            validationData
+        );
+    }
+
+    function getInteractionData(
+        uint256 tokenId
+    ) internal view returns (bytes memory data) {
+        (data, ) = IInteractor(interactor).getInteractionData(
+            address(this),
+            tokenId
+        );
     }
 
     //[[[[PRIVATE FUNCTIONS]]]]
