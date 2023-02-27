@@ -34,12 +34,6 @@ contract Deploy is Script {
         console2.log("~~~~~~~~~~ Observability ADDRESS ~~~~~~~~~~~");
         console2.logAddress(o11y);
 
-        console2.log("~~~~~~~~~~ Deployer ADDRESS ~~~~~~~~~~~");
-        console2.logAddress(vm.addr(deployerPrivateKey));
-
-        console2.log("~~~~~~~~~~ Deployer BALANCE ~~~~~~~~~~~");
-        console2.logUint(vm.addr(deployerPrivateKey).balance);
-
         vm.startBroadcast(deployerPrivateKey);
 
         address tokenImpl = address(new FixedPriceToken(factory, o11y));
