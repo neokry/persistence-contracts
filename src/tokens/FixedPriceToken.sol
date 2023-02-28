@@ -214,6 +214,13 @@ contract FixedPriceToken is
         htmlRenderer = _htmlRenderer;
     }
 
+    /// @notice add an import to the token
+    function addImport(
+        IHTMLRenderer.FileType calldata _import
+    ) external onlyOwner {
+        _addImport(_import);
+    }
+
     /// @notice add multiple imports to the token
     function addManyImports(
         IHTMLRenderer.FileType[] calldata _imports

@@ -3,5 +3,6 @@
   "HTMLRendererImpl": "0x0f8e65205893df938d545d4faee383951af9bafd",
   "Observability": "0x34c9a99727a140c0595b602a28fdfa8bcdfa0fa3",
   "FixedPriceTokenImpl": "0x424F1C2b85BCEc187FC22fBA2B307E31950992Bc",
+  "HolderInteractor": "0x5f9c1e7e31875beaa6ba6b0ab573a4abecc95d67",
   "ETHFSAdapter": "0x4b1318c08a2357eff630949c33d3819ad3656bda"
 }
