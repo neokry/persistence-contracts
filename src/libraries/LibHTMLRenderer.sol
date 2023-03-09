@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
 
-import {Base64} from "base64-sol/base64.sol";
 import {ITokenFactory} from "../interfaces/ITokenFactory.sol";
 import {DynamicBuffer} from "../vendor/utils/DynamicBuffer.sol";
 import {IFileStore} from "ethfs/IFileStore.sol";
 import {File} from "ethfs/File.sol";
-import {LibStorage, TokenStorage} from "./LibStorage.sol";
-import "forge-std/console2.sol";
 
 library LibHTMLRenderer {
     error InvalidScriptType();
@@ -67,39 +64,38 @@ library LibHTMLRenderer {
 
     uint256 constant SCRIPT_PLAINTEXT_BYTES = 33;
 
-    function ts() internal pure returns (TokenStorage storage) {
-        return LibStorage.tokenStorage();
-    }
-
     // [[[ HTML Generation Functions ]]]
 
     /**
      * @notice Construct url safe html from the given scripts.
      */
     function generateDoubleURLEncodedHTML(
-        ScriptRequest[] calldata scripts
+        ScriptRequest[] calldata scripts,
+        address ethFS
     ) external view returns (bytes memory) {
         uint256 i = 0;
         uint256 length = scripts.length;
         bytes[] memory scriptData = new bytes[](length);
         uint256 bufferSize = HTML_TOTAL_BYTES;
 
-        do {
-            scriptData[i] = getScriptData(scripts[i]);
-            bufferSize +=
-                (
-                    scripts[i].scriptType == ScriptType.JAVASCRIPT_PLAINTEXT
-                        ? sizeForBase64Encoding(scriptData[i].length)
-                        : scriptData[i].length
-                ) +
-                getScriptSize(scripts[i]);
-        } while (++i < length);
+        unchecked {
+            do {
+                scriptData[i] = getScriptData(scripts[i], ethFS);
+                bufferSize +=
+                    (
+                        scripts[i].scriptType == ScriptType.JAVASCRIPT_PLAINTEXT
+                            ? sizeForBase64Encoding(scriptData[i].length)
+                            : scriptData[i].length
+                    ) +
+                    getScriptSize(scripts[i]);
+            } while (++i < length);
+        }
 
         bytes memory buffer = DynamicBuffer.allocate(bufferSize);
 
         DynamicBuffer.appendSafe(buffer, HTML_TAG_URL_SAFE);
         DynamicBuffer.appendSafe(buffer, HTML_START);
-        appendScripts(buffer, scripts, scriptData);
+        appendScripts(buffer, scripts, scriptData, ethFS);
         DynamicBuffer.appendSafe(buffer, HTML_END);
 
         return buffer;
@@ -108,7 +104,8 @@ library LibHTMLRenderer {
     function appendScripts(
         bytes memory buffer,
         ScriptRequest[] calldata scripts,
-        bytes[] memory scriptData
+        bytes[] memory scriptData,
+        address ethfs
     ) internal view {
         bytes memory prefix;
         bytes memory suffix;
@@ -127,19 +124,23 @@ library LibHTMLRenderer {
                         false
                     );
                 else
-                    DynamicBuffer.appendSafe(buffer, getScriptData(scripts[i]));
+                    DynamicBuffer.appendSafe(
+                        buffer,
+                        getScriptData(scripts[i], ethfs)
+                    );
                 DynamicBuffer.appendSafe(buffer, suffix);
             } while (++i < length);
         }
     }
 
     function getScriptData(
-        ScriptRequest calldata script
+        ScriptRequest calldata script,
+        address ethFS
     ) internal view returns (bytes memory) {
         return
             script.data.length > 0
                 ? script.data
-                : bytes(IFileStore(ts().ethFS).getFile(script.name).read());
+                : bytes(IFileStore(ethFS).getFile(script.name).read());
     }
 
     function getScriptSize(

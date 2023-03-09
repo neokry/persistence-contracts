@@ -19,9 +19,11 @@
     "deploy:dev": "forge script script/DeployDev.s.sol:Deploy --fork-url http://localhost:8545 --broadcast",
     "mint:dev": "forge script script/MintDev.s.sol:Mint --fork-url http://localhost:8545 --broadcast -vvvv",
     "uri:dev": "forge script script/TokenURIDev.s.sol:TokenURI --fork-url http://localhost:8545 --broadcast -vvvv",
-    "verify:factory": "forge verify-contract --chain-id 5 --flatten --watch --constructor-args 0x000000000000000000000000fd236c049a9eb8165e5a7bc85ceb4c91c3a73f9a 0xd36c3492ceb5566a904f3dfeab7bb9203dd7bdb8 src/MathBlocksToken/MathBlocksFactory.sol:MathBlocksFactory $ETHERSCAN_API_KEY",
-    "deploy:v2": "source .env && forge script script/DeployV2.s.sol:Deploy --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv",
-    "deploy:ints": "source .env && forge script script/DeployInteractors.s.sol:Deploy --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv"
+    "verify": "forge verify-contract --chain-id 5 --watch --flatten --constructor-args 0x0000000000000000000000006cb5bf60515e679f8bc6ce5cc63db2e26cd8081d00000000000000000000000034c9a99727a140c0595b602a28fdfa8bcdfa0fa30000000000000000000000007bc86f0a10fb91c2f8e00264e1f2dd591b1fd2c90000000000000000000000005e348d0975a920e9611f8140f84458998a53af94 0x66fe65c938d846cf5a449a4643eee45dbd0b316b src/tokens/FixedPriceToken.sol:FixedPriceToken $ETHERSCAN_API_KEY",
+    "deploy:v2": "source .env && forge script script/DeployV2.s.sol:DeployV2 --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv",
+    "set:interactor": "source .env && forge script script/SetInteractor.s.sol:SetInteractor --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv",
+    "deploy:ints": "source .env && forge script script/DeployInteractors.s.sol:Deploy --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv",
+    "deploy:html": "source .env && forge script script/DeployHTMLPreview.s.sol:DeployHTML --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv"
   },
   "repository": {
     "type": "git",

@@ -9,14 +9,18 @@ import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Stri
 
 import {IInteractor} from "./interfaces/IInteractor.sol";
 import {IToken} from "../tokens/interfaces/IToken.sol";
-import "forge-std/console2.sol";
 
 ///@notice This interactor allows a token owner to interact and aggregates all interaction data on view
-contract CanvasInteractor is IInteractor {
+contract SequentialInteractor is IInteractor {
     using StringsUpgradeable for uint256;
 
-    ///@notice Token contract => TokenId => Interaction data pointer
-    mapping(address => mapping(uint256 => address)) public tokenToDataPointer;
+    struct DataEntry {
+        uint256 tokenId;
+        address dataPointer;
+    }
+
+    ///@notice Token contract => Interaction data pointer
+    mapping(address => DataEntry[]) public tokenToDataEntry;
 
     ///@notice Token contract => Max entry bytes
     mapping(address => uint256) tokenToMaxEntryBytes;
@@ -24,11 +28,11 @@ contract CanvasInteractor is IInteractor {
     uint256 constant ONE_MEGABYTE_IN_BYTES = 1000000;
     uint256 constant UINT256_BYTES = 32;
 
-    // window.__rt_user=%7B%7D;
-    uint256 constant SCRIPT_META_BYTES = 24;
+    // window.__rt_user=%257B%257D;
+    uint256 constant SCRIPT_META_BYTES = 28;
 
-    // %2210000%22:%22%22,
-    uint256 constant ENTRY_META_BYTES = 19;
+    // %2522m[idx]%2522:%2522[data]:[tokenId]%2522,
+    uint256 constant ENTRY_META_BYTES = 48;
 
     // [[[ View Functions ]]]
 
@@ -47,34 +51,42 @@ contract CanvasInteractor is IInteractor {
         address tokenContract,
         uint256 tokenId
     ) external view returns (bytes memory buffer, LibHTMLRenderer.ScriptType) {
-        uint256 totalSupply = IToken(tokenContract).totalSupply();
+        uint256 dataLength = tokenToDataEntry[tokenContract].length;
 
         buffer = DynamicBuffer.allocate(
             ((_sizeForBase64Encoding(tokenToMaxEntryBytes[tokenContract]) +
-                ENTRY_META_BYTES) * totalSupply) + SCRIPT_META_BYTES
+                ENTRY_META_BYTES) * dataLength) + SCRIPT_META_BYTES
         );
 
-        DynamicBuffer.appendSafe(buffer, "window.__rt_user=%7B");
+        DynamicBuffer.appendSafe(buffer, "window.__rt_user=%257B");
 
         uint256 i = 0;
+        DataEntry storage entry;
 
-        unchecked {
-            do {
-                if (i != 0) DynamicBuffer.appendSafe(buffer, ",");
-                DynamicBuffer.appendSafe(buffer, "%22");
-                DynamicBuffer.appendSafe(buffer, bytes(tokenId.toString()));
-                DynamicBuffer.appendSafe(buffer, "%22:%22");
-                DynamicBuffer.appendSafeBase64(
-                    buffer,
-                    SSTORE2.read(tokenToDataPointer[msg.sender][tokenId]),
-                    false,
-                    false
-                );
-                DynamicBuffer.appendSafe(buffer, "%22");
-            } while (++i < totalSupply);
+        if (dataLength > 0) {
+            unchecked {
+                do {
+                    entry = tokenToDataEntry[tokenContract][i];
+                    if (i != 0) DynamicBuffer.appendSafe(buffer, ",");
+                    DynamicBuffer.appendSafe(buffer, "%2522m"); // "m
+                    DynamicBuffer.appendSafe(buffer, bytes(i.toString()));
+                    DynamicBuffer.appendSafe(buffer, "%2522:%2522"); // ":"
+                    DynamicBuffer.appendSafeBase64(
+                        buffer,
+                        abi.encodePacked(
+                            SSTORE2.read(entry.dataPointer),
+                            bytes(":"),
+                            bytes(entry.tokenId.toString())
+                        ),
+                        false,
+                        false
+                    );
+                    DynamicBuffer.appendSafe(buffer, "%2522"); // "
+                } while (++i < dataLength);
+            }
         }
 
-        DynamicBuffer.appendSafe(buffer, "%7D;");
+        DynamicBuffer.appendSafe(buffer, "%257D;");
 
         return (buffer, LibHTMLRenderer.ScriptType.JAVASCRIPT_URL_ENCODED);
     }
@@ -94,8 +106,11 @@ contract CanvasInteractor is IInteractor {
         if (interactionData.length > tokenToMaxEntryBytes[msg.sender])
             tokenToMaxEntryBytes[msg.sender] = interactionData.length;
 
-        tokenToDataPointer[msg.sender][tokenId] = SSTORE2.write(
-            interactionData
+        tokenToDataEntry[msg.sender].push(
+            DataEntry({
+                dataPointer: SSTORE2.write(interactionData),
+                tokenId: tokenId
+            })
         );
 
         emit InteractionDataUpdated(user, msg.sender, tokenId, interactionData);

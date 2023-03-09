@@ -1,0 +1,50 @@
+{
+  "transactions": [
+    {
+      "hash": "0xd7ecbc19ee98462441b89584ad357cc9db657d1b0d97df97d45292f142bb51cb",
+      "transactionType": "CALL",
+      "contractName": "TokenProxy",
+      "contractAddress": "0x1d352e2a5Eab545620f9AB673511e3450c0850Cf",
+      "function": null,
+      "arguments": null,
+      "rpc": "https://eth-goerli.g.alchemy.com/v2/KbASyiHXJ3to8p40_vE8VLFbTbnOMwBp",
+      "transaction": {
+        "type": "0x02",
+        "from": "0x7498e6e471f31e869f038d8dbffbdfdf650c3f95",
+        "to": "0x1d352e2a5eab545620f9ab673511e3450c0850cf",
+        "gas": "0xb77a",
+        "value": "0x0",
+        "data": "0x927fb061000000000000000000000000f02b1f5e702678e462fea6f034ebf761768b1dca",
+        "nonce": "0x69",
+        "accessList": []
+      },
+      "additionalContracts": []
+    }
+  ],
+  "receipts": [
+    {
+      "transactionHash": "0xd7ecbc19ee98462441b89584ad357cc9db657d1b0d97df97d45292f142bb51cb",
+      "transactionIndex": "0x4",
+      "blockHash": "0xa02f7f782ea45fb0d53afdd04d96c3907f625bf6418ec1a9f8ae27384dbe7418",
+      "blockNumber": "0x838da8",
+      "from": "0x7498e6e471f31e869f038D8DBffbDFdf650c3F95",
+      "to": "0x1d352e2a5Eab545620f9AB673511e3450c0850Cf",
+      "cumulativeGasUsed": "0xd1033",
+      "gasUsed": "0x84d6",
+      "contractAddress": null,
+      "logs": [],
+      "status": "0x1",
+      "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "type": "0x2",
+      "effectiveGasPrice": "0xb409299f"
+    }
+  ],
+  "libraries": [],
+  "pending": [],
+  "path": "/Users/patrickgenevich/Code/mathblocks/broadcast/SetInteractor.s.sol/5/run-latest.json",
+  "returns": {},
+  "timestamp": 1678320445,
+  "chain": 5,
+  "multi": false,
+  "commit": "36aa473"
+}

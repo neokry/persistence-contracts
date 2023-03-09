@@ -82,6 +82,19 @@ abstract contract TokenBase is
         return LibMetadata.genericDataURI(tokenId);
     }
 
+    /// @notice returns the double url encoded html for a given token id
+    function tokenHTML(uint256 tokenId) external view returns (string memory) {
+        LibHTMLRenderer.ScriptRequest[] memory scripts = LibMetadata
+            .getAllScripts(tokenId);
+        return
+            string(
+                LibHTMLRenderer.generateDoubleURLEncodedHTML(
+                    scripts,
+                    ts().ethFS
+                )
+            );
+    }
+
     /// @notice gets the total supply of tokens
     function totalSupply() public view returns (uint256) {
         return _tokenIdCounter.current();

@@ -1,0 +1,35 @@
+{
+  "transactions": [
+    {
+      "hash": "0xeca651a80a85c31a0afff3acf6149a21d50c1c7aef5d930705d46b563968ef02",
+      "transactionType": "CALL",
+      "contractName": "TokenProxy",
+      "contractAddress": "0x1d352e2a5Eab545620f9AB673511e3450c0850Cf",
+      "function": null,
+      "arguments": null,
+      "rpc": "https://eth-goerli.g.alchemy.com/v2/KbASyiHXJ3to8p40_vE8VLFbTbnOMwBp",
+      "transaction": {
+        "type": "0x02",
+        "from": "0x7498e6e471f31e869f038d8dbffbdfdf650c3f95",
+        "to": "0x1d352e2a5eab545620f9ab673511e3450c0850cf",
+        "gas": "0xb77a",
+        "value": "0x0",
+        "data": "0x927fb0610000000000000000000000000b11e81948b528688d17b81e8f1e2c2b6c45f0e6",
+        "nonce": "0x67",
+        "accessList": []
+      },
+      "additionalContracts": []
+    }
+  ],
+  "receipts": [],
+  "libraries": [],
+  "pending": [
+    "0xeca651a80a85c31a0afff3acf6149a21d50c1c7aef5d930705d46b563968ef02"
+  ],
+  "path": "/Users/patrickgenevich/Code/mathblocks/broadcast/SetInteractor.s.sol/5/run-latest.json",
+  "returns": {},
+  "timestamp": 1678319610,
+  "chain": 5,
+  "multi": false,
+  "commit": "36aa473"
+}

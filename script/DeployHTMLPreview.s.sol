@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
 import "forge-std/console2.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {HTMLPreview} from "../src/HTMLPreview.sol";
 
-import {FixedPriceToken} from "../src/tokens/FixedPriceToken.sol";
-import {FeeManager} from "../src/FeeManager.sol";
-import {SequentialInteractor} from "../src/interactors/SequentialInteractor.sol";
-
-contract Deploy is Script {
+contract DeployHTML is Script {
     using Strings for uint256;
 
     string configFile;
@@ -25,44 +22,35 @@ contract Deploy is Script {
         uint256 chainID = vm.envUint("CHAIN_ID");
         console.log("CHAIN_ID", chainID);
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-
         configFile = vm.readFile(
             string.concat("./addresses/", Strings.toString(chainID), ".json")
         );
 
+        address ethfs = _getKey("ETHFS");
+
+        console2.log("~~~~~~~~~~ EthFS ADDRESS ~~~~~~~~~~~");
+        console2.logAddress(ethfs);
+
         vm.startBroadcast(deployerPrivateKey);
 
-        address seqInteractor = address(new SequentialInteractor());
-
-        //address canvasInteractor = address(new CanvasInteractor());
+        address htmlPreview = address(new HTMLPreview(ethfs));
 
         vm.stopBroadcast();
 
         string memory filePath = string(
-            abi.encodePacked("deploys/", chainID.toString(), ".interactors.txt")
+            abi.encodePacked(
+                "deploys/",
+                chainID.toString(),
+                ".html-preview.txt"
+            )
         );
 
         vm.writeLine(
             filePath,
             string(
-                abi.encodePacked(
-                    "SequentialInteractor: ",
-                    addressToString(seqInteractor)
-                )
+                abi.encodePacked("HTMLPreview: ", addressToString(htmlPreview))
             )
         );
-
-        /*
-        vm.writeLine(
-            filePath,
-            string(
-                abi.encodePacked(
-                    "CanvasInteractor: ",
-                    addressToString(canvasInteractor)
-                )
-            )
-        );
-        */
     }
 
     function addressToString(

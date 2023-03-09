@@ -7,16 +7,18 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 import {FixedPriceToken} from "../src/tokens/FixedPriceToken.sol";
 import {FeeManager} from "../src/FeeManager.sol";
-import {HolderInteractor} from "../src/interactors/HolderInteractor.sol";
-import {CanvasInteractor} from "../src/interactors/CanvasInteractor.sol";
+import {SequentialInteractor} from "../src/interactors/SequentialInteractor.sol";
 
-contract Deploy is Script {
+contract DeployV2 is Script {
     using Strings for uint256;
 
     string configFile;
 
     function _getKey(string memory key) internal view returns (address result) {
-        (result) = abi.decode(vm.parseJson(configFile, key), (address));
+        (result) = abi.decode(
+            vm.parseJson(configFile, string.concat(".", key)),
+            (address)
+        );
     }
 
     function run() public {
@@ -31,6 +33,7 @@ contract Deploy is Script {
         address factory = _getKey("Factory");
         address o11y = _getKey("Observability");
         address ethfs = _getKey("ETHFS");
+        address feeManager = _getKey("FeeManager");
 
         console2.log("~~~~~~~~~~ Factory ADDRESS ~~~~~~~~~~~");
         console2.logAddress(factory);
@@ -40,17 +43,17 @@ contract Deploy is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
+        /*
         address feeManager = address(
             new FeeManager(1000, 0x04bfb0034F24E424489F566f32D1f57647469f9E)
         );
+        */
 
         address tokenImpl = address(
             new FixedPriceToken(factory, o11y, feeManager, ethfs)
         );
 
-        address holderInteractor = address(new HolderInteractor());
-
-        address canvasInteractor = address(new CanvasInteractor());
+        //address seqInteractor = address(new SequentialInteractor());
 
         vm.stopBroadcast();
 
@@ -62,12 +65,12 @@ contract Deploy is Script {
             filePath,
             string(
                 abi.encodePacked(
-                    "FixedPriceToken Upgrade implementation: ",
+                    "FixedPriceToken implementation: ",
                     addressToString(tokenImpl)
                 )
             )
         );
-
+        /*
         vm.writeLine(
             filePath,
             string(
@@ -79,21 +82,12 @@ contract Deploy is Script {
             filePath,
             string(
                 abi.encodePacked(
-                    "HolderInteractor: ",
-                    addressToString(holderInteractor)
+                    "SequentialInteractor: ",
+                    addressToString(seqInteractor)
                 )
             )
         );
-
-        vm.writeLine(
-            filePath,
-            string(
-                abi.encodePacked(
-                    "CanvasInteractor: ",
-                    addressToString(canvasInteractor)
-                )
-            )
-        );
+        */
     }
 
     function addressToString(

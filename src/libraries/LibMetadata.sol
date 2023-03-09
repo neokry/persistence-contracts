@@ -7,7 +7,6 @@ import {StringsUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Stri
 import {IInteractor} from "../interactors/interfaces/IInteractor.sol";
 import {LibHTMLRenderer} from "./LibHTMLRenderer.sol";
 import {LibStorage, MetadataStorage, TokenStorage} from "./LibStorage.sol";
-import "forge-std/console2.sol";
 
 library LibMetadata {
     using StringsUpgradeable for uint256;
@@ -44,7 +43,8 @@ library LibMetadata {
                     //'","animation_url":"',
                     "%22,%22animation_url%22:%22",
                     LibHTMLRenderer.generateDoubleURLEncodedHTML(
-                        getAllScripts(tokenId)
+                        getAllScripts(tokenId),
+                        ts().ethFS
                     ),
                     //","image":"
                     "%22,%22image%22:%22",
@@ -138,8 +138,8 @@ library LibMetadata {
         return
             bytes(
                 string.concat(
-                    //var persistence={blockDifficulty:"
-                    "var%2520persistence=%257BblockDifficulty:%2522",
+                    //window.persistence={blockDifficulty:"
+                    "window.persistence=%257BblockDifficulty:%2522",
                     blockDifficulty.toString(),
                     //",tokenId:"
                     "%2522,tokenId:%2522",
