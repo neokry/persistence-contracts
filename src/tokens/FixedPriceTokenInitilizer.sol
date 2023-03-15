@@ -59,12 +59,9 @@ contract FixedPriceTokenInitilizer is WithStorage {
 
         fixedPriceSaleInfo().presaleStartTime = args.presaleStartTime;
         fixedPriceSaleInfo().presaleEndTime = args.presaleEndTime;
-        fixedPriceSaleInfo().presalePrice = args.presalePrice;
         fixedPriceSaleInfo().publicStartTime = args.publicStartTime;
         fixedPriceSaleInfo().publicEndTime = args.publicEndTime;
         fixedPriceSaleInfo().publicPrice = args.publicPrice;
-        fixedPriceSaleInfo().maxPresaleMintsPerAddress = args
-            .maxPresaleMintsPerAddress;
         fixedPriceSaleInfo().merkleRoot = args.merkleRoot;
 
         _addManyImports(args.imports);

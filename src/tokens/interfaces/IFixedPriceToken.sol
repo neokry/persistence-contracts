@@ -16,13 +16,11 @@ interface IFixedPriceToken {
     error MaxPresaleMintsForUserExceeded();
 
     struct FixedPriceSaleDetails {
+        uint128 publicPrice;
         uint64 publicStartTime;
         uint64 publicEndTime;
         uint64 presaleStartTime;
         uint64 presaleEndTime;
-        uint112 publicPrice;
-        uint112 presalePrice;
-        uint64 maxPresaleMintsPerAddress;
         bytes32 merkleRoot;
     }
 

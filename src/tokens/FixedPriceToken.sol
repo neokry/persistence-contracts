@@ -20,6 +20,33 @@ contract FixedPriceToken is
 {
     using StringsUpgradeable for uint256;
 
+    modifier onlyValidAmount(uint256 amount) {
+        if (amount != 0) revert InvalidAmount();
+        _;
+    }
+
+    modifier onlyNotSoldOut(uint256 amount) {
+        if (totalSupply() > 0 && totalSupply() + amount > ts().maxSupply)
+            revert SoldOut();
+        _;
+    }
+
+    modifier onlySaleActive() {
+        if (
+            block.timestamp < fixedPriceSaleInfo().publicStartTime ||
+            block.timestamp >= fixedPriceSaleInfo().publicEndTime
+        ) revert SaleNotActive();
+        _;
+    }
+
+    modifier onlyPresaleActive() {
+        if (
+            block.timestamp < fixedPriceSaleInfo().presaleStartTime ||
+            block.timestamp >= fixedPriceSaleInfo().presaleEndTime
+        ) revert SaleNotActive();
+        _;
+    }
+
     //[[[[SETUP FUNCTIONS]]]]
 
     constructor(
@@ -59,9 +86,6 @@ contract FixedPriceToken is
                 presaleStartTime: fixedPriceSaleInfo().presaleStartTime,
                 presaleEndTime: fixedPriceSaleInfo().presaleEndTime,
                 publicPrice: fixedPriceSaleInfo().publicPrice,
-                presalePrice: fixedPriceSaleInfo().presalePrice,
-                maxPresaleMintsPerAddress: fixedPriceSaleInfo()
-                    .maxPresaleMintsPerAddress,
                 merkleRoot: fixedPriceSaleInfo().merkleRoot
             });
     }
@@ -69,22 +93,19 @@ contract FixedPriceToken is
     //[[[[PURCHASE FUNCTIONS]]]]
 
     /// @notice purchase a number of tokens
-    function purchase(uint256 amount) external payable nonReentrant {
-        // Check if sale is active
-        if (
-            block.timestamp < fixedPriceSaleInfo().publicStartTime ||
-            block.timestamp >= fixedPriceSaleInfo().publicEndTime
-        ) revert SaleNotActive();
-
+    function purchase(
+        uint256 amount
+    )
+        external
+        payable
+        nonReentrant
+        onlySaleActive
+        onlyNotSoldOut(amount)
+        onlyValidAmount(amount)
+    {
         // Check if price is correct
         if (msg.value < (amount * fixedPriceSaleInfo().publicPrice))
             revert InvalidPrice();
-
-        // Check if there are enough tokens left
-        if (totalSupply() + amount > ts().maxSupply) revert SoldOut();
-
-        // Check if amount is nonzero
-        if (amount < 1) revert InvalidAmount();
 
         _purchase(amount);
     }
@@ -92,45 +113,58 @@ contract FixedPriceToken is
     /// @notice purchase a number of tokens
     function purchasePresale(
         uint256 amount,
+        uint256 maxMints,
+        uint256 pricePerToken,
         bytes32[] calldata proof
-    ) external payable nonReentrant {
-        // Check if presale is active
-        if (
-            block.timestamp < fixedPriceSaleInfo().presaleStartTime ||
-            block.timestamp >= fixedPriceSaleInfo().presaleEndTime
-        ) revert SaleNotActive();
+    )
+        external
+        payable
+        nonReentrant
+        onlyPresaleActive
+        onlyNotSoldOut(amount)
+        onlyValidAmount(amount)
+    {
+        // Validate presale proof
+        _validatePresale(proof, maxMints, pricePerToken);
 
         // Check if price is correct
-        if (msg.value < (amount * fixedPriceSaleInfo().presalePrice))
-            revert InvalidPrice();
+        if (msg.value < (amount * pricePerToken)) revert InvalidPrice();
 
-        // Check if there are enough tokens left
-        if (totalSupply() + amount > ts().maxSupply) revert SoldOut();
-
-        // Check if amount is nonzero
-        if (amount < 1) revert InvalidAmount();
-
-        // Check if user is in presale
-        if (
-            MerkleProofUpgradeable.verifyCalldata(
-                proof,
-                fixedPriceSaleInfo().merkleRoot,
-                keccak256(abi.encodePacked(msg.sender))
-            ) == false
-        ) revert InvalidProof();
-
-        // Check if user has not exceeded max mints
         fixedPriceSaleInfo().presaleMintsByAddress[msg.sender] += amount;
 
-        if (
-            fixedPriceSaleInfo().presaleMintsByAddress[msg.sender] >
-            fixedPriceSaleInfo().maxPresaleMintsPerAddress
-        ) revert MaxPresaleMintsForUserExceeded();
+        // Check if user has exceeded max mints
+        if (fixedPriceSaleInfo().presaleMintsByAddress[msg.sender] > maxMints)
+            revert MaxPresaleMintsForUserExceeded();
 
         _purchase(amount);
     }
 
+    //[[[ UPDATE SALE FUNCTIONS ]]]
+    function setSaleInfo(
+        uint104 publicSalePrice,
+        uint32 maxSalePurchasePerAddress,
+        uint64 publicSaleStart,
+        uint64 publicSaleEnd,
+        uint64 presaleStart,
+        uint64 presaleEnd,
+        bytes32 presaleMerkleRoot
+    ) public {}
+
     //[[[ INTERNAL FUNCTIONS ]]]]]
+
+    function _validatePresale(
+        bytes32[] calldata proof,
+        uint256 maxMints,
+        uint256 pricePerToken
+    ) internal view {
+        if (
+            MerkleProofUpgradeable.verifyCalldata(
+                proof,
+                fixedPriceSaleInfo().merkleRoot,
+                keccak256(abi.encode(msg.sender, maxMints, pricePerToken))
+            ) == false
+        ) revert InvalidProof();
+    }
 
     function _purchase(uint256 amount) internal {
         _seedAndMintMany(msg.sender, amount);

@@ -15,7 +15,6 @@ pragma solidity ^0.8.16;
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import {SSTORE2} from "@0xsequence/sstore2/contracts/SSTORE2.sol";
 
 import {IToken} from "./tokens/interfaces/IToken.sol";
@@ -42,14 +41,10 @@ abstract contract TokenBase is
     VersionedContract,
     UUPS
 {
-    using CountersUpgradeable for CountersUpgradeable.Counter;
-
     address public immutable factory;
     address public immutable o11y;
     address public immutable feeManager;
     address public immutable ethFS;
-
-    CountersUpgradeable.Counter private _tokenIdCounter;
 
     //[[[[MODIFIERS]]]]
 
@@ -97,7 +92,7 @@ abstract contract TokenBase is
 
     /// @notice gets the total supply of tokens
     function totalSupply() public view returns (uint256) {
-        return _tokenIdCounter.current();
+        return ts().currentTokenId;
     }
 
     function feeForAmount(
@@ -220,11 +215,10 @@ abstract contract TokenBase is
 
     /// @notice seeds the token id and mints the token
     function _seedAndMint(address to) internal {
-        ts().tokenIdToBlockDifficulty[_tokenIdCounter.current()] = block
-            .difficulty;
+        ts().tokenIdToBlockDifficulty[ts().currentTokenId] = block.difficulty;
 
-        _mint(to, _tokenIdCounter.current());
-        _tokenIdCounter.increment();
+        _mint(to, ts().currentTokenId);
+        ts().currentTokenId += 1;
     }
 
     function _seedAndMintMany(address to, uint256 amount) internal {

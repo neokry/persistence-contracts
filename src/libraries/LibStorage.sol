@@ -14,6 +14,7 @@ struct TokenStorage {
     address interactor;
     bool artistProofsMinted;
     uint256 maxSupply;
+    uint256 currentTokenId;
 }
 
 struct MetadataStorage {
@@ -27,13 +28,11 @@ struct MetadataStorage {
 
 struct FixedPriceSaleInfo {
     mapping(address => uint256) presaleMintsByAddress;
+    uint128 publicPrice;
     uint64 publicStartTime;
     uint64 publicEndTime;
     uint64 presaleStartTime;
     uint64 presaleEndTime;
-    uint112 publicPrice;
-    uint112 presalePrice;
-    uint64 maxPresaleMintsPerAddress;
     bytes32 merkleRoot;
 }
 
