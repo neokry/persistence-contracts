@@ -1,15 +1,5 @@
 // SPDX-License-Identifier: MIT
 
-/**                                                                                                                    
-`7MM"""Mq.`7MM"""YMM  `7MM"""Mq.   .M"""bgd `7MMF' .M"""bgd MMP""MM""YMM `7MM"""YMM  `7MN.   `7MF' .g8"""bgd `7MM"""YMM  
-  MM   `MM. MM    `7    MM   `MM. ,MI    "Y   MM  ,MI    "Y P'   MM   `7   MM    `7    MMN.    M .dP'     `M   MM    `7  
-  MM   ,M9  MM   d      MM   ,M9  `MMb.       MM  `MMb.          MM        MM   d      M YMb   M dM'       `   MM   d    
-  MMmmdM9   MMmmMM      MMmmdM9     `YMMNq.   MM    `YMMNq.      MM        MMmmMM      M  `MN. M MM            MMmmMM    
-  MM        MM   Y  ,   MM  YM.   .     `MM   MM  .     `MM      MM        MM   Y  ,   M   `MM.M MM.           MM   Y  , 
-  MM        MM     ,M   MM   `Mb. Mb     dM   MM  Mb     dM      MM        MM     ,M   M     YMM `Mb.     ,'   MM     ,M 
-.JMML.    .JMMmmmmMMM .JMML. .JMM.P"Ybmmd"  .JMML.P"Ybmmd"     .JMML.    .JMMmmmmMMM .JML.    YM   `"bmmmd'  .JMMmmmmMMM 
- */
-
 pragma solidity ^0.8.16;
 
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
@@ -92,7 +82,7 @@ abstract contract TokenBase is
 
     /// @notice gets the total supply of tokens
     function totalSupply() public view returns (uint256) {
-        return ts().currentTokenId;
+        return ts().totalMinted;
     }
 
     function feeForAmount(
@@ -119,6 +109,7 @@ abstract contract TokenBase is
         info.interactor = ts().interactor;
         info.artistProofsMinted = ts().artistProofsMinted;
         info.maxSupply = ts().maxSupply;
+        info.totalMinted = ts().totalMinted;
     }
 
     function metadataInfo() public view returns (MetadataInfo memory info) {
@@ -215,10 +206,10 @@ abstract contract TokenBase is
 
     /// @notice seeds the token id and mints the token
     function _seedAndMint(address to) internal {
-        ts().tokenIdToBlockDifficulty[ts().currentTokenId] = block.difficulty;
+        ts().tokenIdToBlockDifficulty[ts().totalMinted] = block.difficulty;
 
-        _mint(to, ts().currentTokenId);
-        ts().currentTokenId += 1;
+        _mint(to, ts().totalMinted);
+        ts().totalMinted += 1;
     }
 
     function _seedAndMintMany(address to, uint256 amount) internal {

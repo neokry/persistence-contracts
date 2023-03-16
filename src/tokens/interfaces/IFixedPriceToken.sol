@@ -24,6 +24,15 @@ interface IFixedPriceToken {
         bytes32 merkleRoot;
     }
 
+    event SaleInfoSet(
+        uint128 publicPrice,
+        uint64 publicStartTime,
+        uint64 publicEndTime,
+        uint64 presaleStartTime,
+        uint64 presaleEndTime,
+        bytes32 merkleRoot
+    );
+
     /// @notice initialize the token
     function initialize(address owner, bytes calldata data) external;
 }

@@ -14,7 +14,7 @@ struct TokenStorage {
     address interactor;
     bool artistProofsMinted;
     uint256 maxSupply;
-    uint256 currentTokenId;
+    uint256 totalMinted;
 }
 
 struct MetadataStorage {

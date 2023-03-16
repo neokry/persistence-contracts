@@ -76,11 +76,9 @@ contract Mint is Script {
             // Sale info
             presaleStartTime: 0,
             presaleEndTime: 0,
-            presalePrice: 0,
             publicPrice: 1 ether,
             publicStartTime: 0,
             publicEndTime: 0,
-            maxPresaleMintsPerAddress: 1,
             merkleRoot: bytes32(0)
         });
 

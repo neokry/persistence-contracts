@@ -9,7 +9,6 @@ import {IFixedPriceToken} from "./interfaces/IFixedPriceToken.sol";
 import {InitArgs} from "./FixedPriceTokenInitilizer.sol";
 import {TokenBase} from "../TokenBase.sol";
 import {WithStorage, FixedPriceSaleInfo} from "../libraries/LibStorage.sol";
-import {LibMetadata} from "../libraries/LibMetadata.sol";
 import {FixedPriceTokenInitilizer} from "./FixedPriceTokenInitilizer.sol";
 
 contract FixedPriceToken is
@@ -21,7 +20,7 @@ contract FixedPriceToken is
     using StringsUpgradeable for uint256;
 
     modifier onlyValidAmount(uint256 amount) {
-        if (amount != 0) revert InvalidAmount();
+        if (amount == 0) revert InvalidAmount();
         _;
     }
 
@@ -108,6 +107,12 @@ contract FixedPriceToken is
             revert InvalidPrice();
 
         _purchase(amount);
+
+        IObservability(ts().o11y).emitSale(
+            msg.sender,
+            fixedPriceSaleInfo().publicPrice,
+            amount
+        );
     }
 
     /// @notice purchase a number of tokens
@@ -124,11 +129,11 @@ contract FixedPriceToken is
         onlyNotSoldOut(amount)
         onlyValidAmount(amount)
     {
-        // Validate presale proof
-        _validatePresale(proof, maxMints, pricePerToken);
-
         // Check if price is correct
         if (msg.value < (amount * pricePerToken)) revert InvalidPrice();
+
+        // Validate presale proof
+        _validatePresale(proof, maxMints, pricePerToken);
 
         fixedPriceSaleInfo().presaleMintsByAddress[msg.sender] += amount;
 
@@ -137,18 +142,36 @@ contract FixedPriceToken is
             revert MaxPresaleMintsForUserExceeded();
 
         _purchase(amount);
+
+        IObservability(ts().o11y).emitSale(msg.sender, pricePerToken, amount);
     }
 
-    //[[[ UPDATE SALE FUNCTIONS ]]]
+    //[[[ SET SALE FUNCTIONS ]]]
+
     function setSaleInfo(
-        uint104 publicSalePrice,
-        uint32 maxSalePurchasePerAddress,
-        uint64 publicSaleStart,
-        uint64 publicSaleEnd,
-        uint64 presaleStart,
-        uint64 presaleEnd,
-        bytes32 presaleMerkleRoot
-    ) public {}
+        uint128 publicPrice,
+        uint64 publicStartTime,
+        uint64 publicEndTime,
+        uint64 presaleStartTime,
+        uint64 presaleEndTime,
+        bytes32 merkleRoot
+    ) public onlyOwner {
+        fixedPriceSaleInfo().presaleStartTime = presaleStartTime;
+        fixedPriceSaleInfo().presaleEndTime = presaleEndTime;
+        fixedPriceSaleInfo().publicStartTime = publicStartTime;
+        fixedPriceSaleInfo().publicEndTime = publicEndTime;
+        fixedPriceSaleInfo().publicPrice = publicPrice;
+        fixedPriceSaleInfo().merkleRoot = merkleRoot;
+
+        emit SaleInfoSet(
+            publicPrice,
+            publicStartTime,
+            publicEndTime,
+            presaleStartTime,
+            presaleEndTime,
+            merkleRoot
+        );
+    }
 
     //[[[ INTERNAL FUNCTIONS ]]]]]
 
@@ -166,12 +189,7 @@ contract FixedPriceToken is
         ) revert InvalidProof();
     }
 
-    function _purchase(uint256 amount) internal {
+    function _purchase(uint256 amount) private {
         _seedAndMintMany(msg.sender, amount);
-        IObservability(ts().o11y).emitSale(
-            msg.sender,
-            fixedPriceSaleInfo().publicPrice,
-            amount
-        );
     }
 }

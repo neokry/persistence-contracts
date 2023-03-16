@@ -87,11 +87,9 @@ abstract contract FixedPriceTokenUtils {
             // Sale info
             presaleStartTime: startTime,
             presaleEndTime: endTime,
-            presalePrice: 0.5 ether,
             publicStartTime: startTime,
             publicEndTime: endTime,
             publicPrice: 1 ether,
-            maxPresaleMintsPerAddress: 2,
             merkleRoot: 0x5e920a24e45bbcff922c9edd8b1be4d9036c9366ecf8b722bbd9610d9c0c4283
         });
 

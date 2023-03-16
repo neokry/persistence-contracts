@@ -23,11 +23,9 @@ struct InitArgs {
     // Sale info
     uint64 presaleStartTime;
     uint64 presaleEndTime;
-    uint112 presalePrice;
     uint64 publicStartTime;
     uint64 publicEndTime;
     uint112 publicPrice;
-    uint64 maxPresaleMintsPerAddress;
     bytes32 merkleRoot;
 }
 
