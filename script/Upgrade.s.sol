@@ -49,7 +49,7 @@ contract Upgrade is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         FixedPriceToken token = FixedPriceToken(TOKEN_TO_UPGRADE);
-        /*
+
         token.upgradeTo(tokenImpl);
         token.addImport(
             IHTMLRenderer.FileType({
@@ -59,7 +59,6 @@ contract Upgrade is Script {
             })
         );
         token.setInteractor(holderInteractor);
-        */
         token.setScript(SCRIPT_UPGRADE);
 
         vm.stopBroadcast();
