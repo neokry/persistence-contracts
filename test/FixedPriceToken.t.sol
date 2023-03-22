@@ -100,6 +100,31 @@ contract FixedPriceTokenTest is Test {
         initToken();
     }
 
+    function test_updateDescription() public {
+        vm.prank(factory);
+        initToken();
+
+        vm.prank(owner);
+        token.updateDescription("New description");
+
+        (, , string memory description, , ) = token.tokenInfo();
+
+        require(
+            keccak256(abi.encodePacked(description)) ==
+                keccak256(abi.encodePacked("New description")),
+            "Invalid description"
+        );
+    }
+
+    function testRevert_updateDescriptionNotOwner() public {
+        vm.prank(factory);
+        initToken();
+
+        vm.prank(user);
+        vm.expectRevert("Ownable: caller is not the owner");
+        token.updateDescription("New description");
+    }
+
     function test_purchase() public {
         vm.prank(factory);
         initToken();

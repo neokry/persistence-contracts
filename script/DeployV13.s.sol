@@ -13,7 +13,10 @@ contract Deploy is Script {
     string configFile;
 
     function _getKey(string memory key) internal view returns (address result) {
-        (result) = abi.decode(vm.parseJson(configFile, key), (address));
+        (result) = abi.decode(
+            vm.parseJson(configFile, string.concat(".", key)),
+            (address)
+        );
     }
 
     function run() public {

@@ -53,6 +53,11 @@ abstract contract TokenBase is
         return _tokenIdCounter.current();
     }
 
+    //[[[METADATA FUNCTIONS]]]
+    function updateDescription(string memory description) external onlyOwner {
+        tokenInfo.description = description;
+    }
+
     //[[[[WITHDRAW FUNCTIONS]]]]
 
     /// @notice withdraws the funds from the contract
